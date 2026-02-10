@@ -11,4 +11,8 @@ export const API_ENDPOINTS = {
     LIST: '/users',
     DETAIL: (id: string) => `/users/${id}`,
   },
+  JOBS: {
+    SUBMIT: '/api/submit-job/',
+    SUBMIT_PREPROCESSING: '/api/submit-preprocessing/',
+  },
 } as const

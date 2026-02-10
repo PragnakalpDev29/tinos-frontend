@@ -1,4 +1,4 @@
-import { post, get, put } from '@/lib/api/client'
+import { post, get, put } from '@/lib/api/axios-client'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 import type {
   LoginDto,

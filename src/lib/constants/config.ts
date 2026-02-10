@@ -4,9 +4,13 @@ export const APP_CONFIG = {
   description: 'Healthcare that meets you where you are',
 } as const
 
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+  const wsHost = process.env.NEXT_PUBLIC_WS_HOST || window.location.host
+  const wsUrl = `${wsProtocol}//${wsHost}/ws/jobs/status/`
+
 export const API_CONFIG = {
   baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001/api/v1',
-  wsUrl: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8001/ws',
+  wsUrl: wsUrl  || 'ws://localhost:8001/ws/jobs/status/',
   timeout: 30000,
 } as const
 

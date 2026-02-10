@@ -47,7 +47,7 @@ export function Footer() {
           </div>
           
           {/* Services Section */}
-          <div>
+          {/* <div>
             <h4 className="text-lg font-bold mb-6">Services</h4>
             <ul className="space-y-4 text-slate-400">
               <li>
@@ -72,9 +72,9 @@ export function Footer() {
               </li>
             </ul>
           </div>
-          
+           */}
           {/* Support Section */}
-          <div>
+          {/* <div>
             <h4 className="text-lg font-bold mb-6">Support</h4>
             <ul className="space-y-4 text-slate-400">
               <li>
@@ -98,10 +98,10 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </div> */}
           
           {/* Legal Section */}
-          <div>
+          {/* <div>
             <h4 className="text-lg font-bold mb-6">Legal</h4>
             <ul className="space-y-4 text-slate-400">
               <li>
@@ -115,7 +115,7 @@ export function Footer() {
                 </Link>
               </li>
             </ul>
-          </div>
+          </div> */}
         </div>
         
         {/* Bottom Section */}
@@ -123,7 +123,7 @@ export function Footer() {
           <p className="text-slate-500 text-sm">
             © 2026 TINOS Telemedicine. All rights reserved.
           </p>
-          <div className="flex gap-8">
+          {/* <div className="flex gap-8">
             <Image 
               className="h-8 grayscale opacity-50" 
               src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=100&q=80" 
@@ -134,7 +134,7 @@ export function Footer() {
               src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?w=100&q=80" 
               alt="LegitScript Certified" 
             />
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>

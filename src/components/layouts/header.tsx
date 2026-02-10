@@ -37,12 +37,12 @@ export function Header() {
           </nav> */}
           
           <div className="flex items-center gap-4">
-            <Link className="hidden sm:block text-slate-600 hover:text-teal-600 font-bold" href="/login">
+            <Link className="bg-teal-600 text-white px-6 py-3 rounded-full font-bold hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/20 hidden md:block" href="/login">
               Login
             </Link>
-            <Link className="bg-teal-600 text-white px-6 py-3 rounded-full font-bold hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/20 hidden md:block" href="/#book">
+            {/* <Link className="bg-teal-600 text-white px-6 py-3 rounded-full font-bold hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/20 hidden md:block" href="/#book">
               Book Now
-            </Link>
+            </Link> */}
             
             {/* Mobile Toggle */}
             <Button 

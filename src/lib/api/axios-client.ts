@@ -1,8 +1,16 @@
+/**
+ * Global Axios Client
+ * Use this for all API requests in both Client and Server Components
+ * Features: Auto JSON parsing, Interceptors, Token refresh, CSRF handling, Timeout
+ */
+
+'use client'
+
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API || 'http://localhost:8001'
 
-export const apiClient: AxiosInstance = axios.create({
+export const axiosClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 30000,
   headers: {
@@ -12,24 +20,25 @@ export const apiClient: AxiosInstance = axios.create({
   withCredentials: true,
 })
 
-apiClient.interceptors.request.use(
+// Request interceptor - add auth token and CSRF token
+axiosClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    console.log('API Request:', {
-      method: config.method?.toUpperCase(),
-      url: config.url,
-      baseURL: config.baseURL,
-      data: config.data,
-      withCredentials: config.withCredentials,
-    })
+    if (process.env.NODE_ENV === 'development') {
+      console.log('API Request:', {
+        method: config.method?.toUpperCase(),
+        url: config.url,
+        baseURL: config.baseURL,
+        data: config.data,
+        withCredentials: config.withCredentials,
+      })
+    }
     
     if (typeof window !== 'undefined') {
-      // Add JWT token if available
       const token = localStorage.getItem('accessToken')
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`
       }
       
-      // Add CSRF token from cookie if available
       const csrfToken = document.cookie
         .split('; ')
         .find(row => row.startsWith('csrftoken='))
@@ -39,6 +48,7 @@ apiClient.interceptors.request.use(
         config.headers['X-CSRFToken'] = csrfToken
       }
     }
+    
     return config
   },
   (error: AxiosError) => {
@@ -47,22 +57,27 @@ apiClient.interceptors.request.use(
   }
 )
 
-apiClient.interceptors.response.use(
+// Response interceptor - handle errors globally and auto token refresh
+axiosClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    console.log('API Response:', {
-      status: response.status,
-      url: response.config.url,
-      data: response.data,
-    })
+    if (process.env.NODE_ENV === 'development') {
+      console.log('API Response:', {
+        status: response.status,
+        url: response.config.url,
+        data: response.data,
+      })
+    }
     return response
   },
   async (error: AxiosError) => {
-    console.error('API Response Error:', {
-      status: error.response?.status,
-      url: error.config?.url,
-      data: error.response?.data,
-      message: error.message,
-    })
+    if (process.env.NODE_ENV === 'development') {
+      console.error('API Response Error:', {
+        status: error.response?.status,
+        url: error.config?.url,
+        data: error.response?.data,
+        message: error.message,
+      })
+    }
     
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
@@ -74,11 +89,13 @@ apiClient.interceptors.response.use(
           const refreshToken = localStorage.getItem('refreshToken')
           
           if (refreshToken) {
-            // Use apiClient to ensure withCredentials is included
             const response = await axios.post(
               `${BASE_URL}/api/auth/token/refresh/`,
               { refresh: refreshToken },
-              { withCredentials: true }
+              { 
+                withCredentials: true,
+                headers: { 'Content-Type': 'application/json' }
+              }
             )
 
             const { access, refresh } = response.data
@@ -91,13 +108,15 @@ apiClient.interceptors.response.use(
               originalRequest.headers.Authorization = `Bearer ${access}`
             }
 
-            return apiClient(originalRequest)
+            return axiosClient(originalRequest)
           }
         }
       } catch (refreshError) {
         if (typeof window !== 'undefined') {
           localStorage.removeItem('accessToken')
           localStorage.removeItem('refreshToken')
+          localStorage.removeItem('user')
+          window.location.href = '/login'
         }
         return Promise.reject(refreshError)
       }
@@ -107,17 +126,30 @@ apiClient.interceptors.response.use(
   }
 )
 
+// Legacy exports (for backward compatibility)
+export const apiClient = axiosClient
+
 export const get = <T>(url: string, config?: object) =>
-  apiClient.get<T>(url, config).then((res) => res.data)
+  axiosClient.get<T>(url, config).then((res) => res.data)
 
 export const post = <T>(url: string, data?: object, config?: object) =>
-  apiClient.post<T>(url, data, config).then((res) => res.data)
+  axiosClient.post<T>(url, data, config).then((res) => res.data)
 
 export const patch = <T>(url: string, data?: object, config?: object) =>
-  apiClient.patch<T>(url, data, config).then((res) => res.data)
+  axiosClient.patch<T>(url, data, config).then((res) => res.data)
 
 export const put = <T>(url: string, data?: object, config?: object) =>
-  apiClient.put<T>(url, data, config).then((res) => res.data)
+  axiosClient.put<T>(url, data, config).then((res) => res.data)
 
 export const del = <T>(url: string, config?: object) =>
-  apiClient.delete<T>(url, config).then((res) => res.data)
+  axiosClient.delete<T>(url, config).then((res) => res.data)
+
+// New helper functions (recommended for new code)
+export const axiosGet = get
+export const axiosPost = post
+export const axiosPatch = patch
+export const axiosPut = put
+export const axiosDelete = del
+
+// Axios fetcher for SWR
+export const axiosFetcher = (url: string) => axiosClient.get(url).then(res => res.data)

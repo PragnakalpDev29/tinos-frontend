@@ -1,5 +1,1 @@
 export { HeroSection } from './HeroSection'
-export { SimpleSecureSeamless } from './SimpleSecureSeamless'
-export { SpecializedCare } from './SpecializedCare'
-export { InsuranceProviders } from './InsuranceProviders'
-export { HealthInPocket } from './HealthInPocket'

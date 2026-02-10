@@ -146,14 +146,3 @@ export function TwoStepLogin() {
     </div>
   )
 }
-
-/* 
- * OTP VERIFICATION FEATURE - COMMENTED OUT FOR FUTURE USE
- * 
- * To enable two-step authentication with OTP:
- * 1. Uncomment the OTP provider in authOptions.ts
- * 2. Replace this component with the two-step flow using:
- *    - PasswordLoginForm (step 1)
- *    - OTPVerificationForm (step 2)
- * 3. Update the login flow to verify password first, then OTP
- */

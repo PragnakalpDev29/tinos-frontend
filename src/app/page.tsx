@@ -1,11 +1,5 @@
 import { MarketingLayout } from '@/components/layouts'
-import { 
-  HeroSection, 
-  SimpleSecureSeamless, 
-  SpecializedCare, 
-  InsuranceProviders, 
-  HealthInPocket 
-} from '@/components/features'
+import { HeroSection } from '@/components/features'
 
 export const metadata = {
   title: 'TINOS - Free Tailwind Template',
@@ -17,10 +11,6 @@ export default function Page() {
     <MarketingLayout>
       <main className="pt-20">
         <HeroSection />
-        <SimpleSecureSeamless />
-        <SpecializedCare />
-        {/* <InsuranceProviders /> */}
-        {/* <HealthInPocket /> */}
       </main>
     </MarketingLayout>
   );
