@@ -134,11 +134,11 @@ export function TwoStepLogin() {
 
       <p className="text-center text-slate-400 text-xs mt-8">
         By signing in, you agree to our{' '}
-        <Link className="underline" href="/terms">
+        <Link className="underline" href="#">
           Terms
         </Link>{' '}
         and{' '}
-        <Link className="underline" href="/privacy">
+        <Link className="underline" href="#">
           Privacy Policy
         </Link>
         .

@@ -1,4 +1,4 @@
-import { Header, Footer, MobileMenu } from '@/components/layouts'
+import { Header,  MobileMenu } from '@/components/layouts'
 import { LoginForm } from '@/components/features/auth'
 
 export default function LoginPage() {
@@ -9,7 +9,7 @@ export default function LoginPage() {
       <main className="min-h-screen flex items-center justify-center px-4 py-24 bg-slate-50">
         <LoginForm />
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

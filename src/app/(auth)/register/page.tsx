@@ -1,4 +1,4 @@
-import { Header, Footer, MobileMenu } from '@/components/layouts'
+import { Header,  MobileMenu } from '@/components/layouts'
 import { RegisterForm } from '@/components/features/auth'
 
 export default function RegisterPage() {
@@ -9,7 +9,7 @@ export default function RegisterPage() {
       <main className="min-h-screen flex items-center justify-center px-4 py-24 bg-slate-50">
         <RegisterForm />
       </main>
-      <Footer />
+      {/* <Footer /> */}
     </div>
   )
 }

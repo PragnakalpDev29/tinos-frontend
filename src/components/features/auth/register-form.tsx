@@ -129,21 +129,7 @@ export function RegisterForm() {
             )}
           </div>
           
-          <div className="bg-slate-50 rounded-2xl p-6 space-y-3">
-            <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-slate-600">Secure and encrypted platform</p>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-slate-600">Professional healthcare services</p>
-            </div>
-            <div className="flex items-start gap-3">
-              <CheckCircle className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-slate-600">24/7 access to your account</p>
-            </div>
-          </div>
-          
+         
           <Button
             className="w-full bg-teal-600 text-white py-5 rounded-full font-bold text-lg hover:bg-teal-700 transition-all shadow-xl shadow-teal-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
             type="submit"
