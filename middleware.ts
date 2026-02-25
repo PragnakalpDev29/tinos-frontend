@@ -14,67 +14,60 @@ export default withAuth(
       secret: process.env.NEXTAUTH_SECRET,
     })
 
-    if (isRootPath(req.nextUrl.pathname)) {
+    const pathname = req.nextUrl.pathname
+
+    if (isRootPath(pathname)) {
       if (_token) {
         return NextResponse.redirect(new URL('/dashboard', req.url))
       }
       return NextResponse.next()
     }
 
-    if (
-      !_token &&
-      publicEndpoints.some(
-        (endpoint) =>
-          req.nextUrl.pathname === endpoint ||
-          req.nextUrl.pathname.startsWith(endpoint)
-      )
-    ) {
+    const isPublicEndpoint = publicEndpoints.some(
+      (endpoint) => pathname === endpoint || pathname.startsWith(endpoint)
+    )
+
+    if (isPublicEndpoint) {
+      if (_token) {
+        return NextResponse.redirect(new URL('/dashboard', req.url))
+      }
       return NextResponse.next()
     }
 
-    if (
-      _token &&
-      publicEndpoints.some(
-        (endpoint) =>
-          req.nextUrl.pathname === endpoint ||
-          req.nextUrl.pathname.startsWith(endpoint)
-      )
-    ) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
+    if (!_token) {
+      return NextResponse.redirect(new URL('/login', req.url))
     }
 
-    if (_token) {
-      if (!hasAccess(_token?.user.role.name, req.nextUrl.pathname)) {
+    if (_token?.user?.role?.name) {
+      if (!hasAccess(_token.user.role.name, pathname)) {
         const response = NextResponse.rewrite(new URL('/403', req.url), {
           status: 403,
         })
         response.headers.set('x-errorCode', '403')
         return response
       }
-      return NextResponse.next()
     }
 
-    return NextResponse.redirect(new URL('/login', req.url))
+    return NextResponse.next()
   },
   {
     callbacks: {
       authorized: async ({ req, token }) => {
         const _token = await getToken({ req })
+        const pathname = req.nextUrl.pathname
 
-        if (isRootPath(req.nextUrl.pathname)) {
+        if (isRootPath(pathname)) {
           return true
         }
 
-        if (
-          !_token &&
-          publicEndpoints.some(
-            (endpoint) =>
-              req.nextUrl.pathname === endpoint ||
-              req.nextUrl.pathname.startsWith(endpoint)
-          )
-        ) {
+        const isPublicEndpoint = publicEndpoints.some(
+          (endpoint) => pathname === endpoint || pathname.startsWith(endpoint)
+        )
+
+        if (isPublicEndpoint) {
           return true
         }
+
         return !!_token
       },
     },

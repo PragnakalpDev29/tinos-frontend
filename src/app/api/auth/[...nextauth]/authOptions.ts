@@ -14,7 +14,9 @@ const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         try {
-          const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API
+          // Use server-side URL, bypassing the proxy
+          const BASE_URL = process.env.BACKEND_API_URL || 'http://127.0.0.1:8000'
+
           const response = await axios.post(
             `${BASE_URL}/api/auth/login/`,
             {
@@ -29,16 +31,23 @@ const authOptions: AuthOptions = {
             status: response.status,
             endpoint: `${BASE_URL}/api/auth/login/`,
           })
-          
+
           // Django backend returns: { message, user, tokens: { access, refresh } }
           if (response.data?.tokens && response.data?.user) {
-            return {
+            const userData = {
               ...response.data.user,
               access: response.data.tokens.access,
               refresh: response.data.tokens.refresh,
             }
+
+            // Ensure role is included in the user data
+            if (!userData.role) {
+              console.warn('Warning: User role not found in backend response')
+            }
+
+            return userData
           }
-          
+
           return response.data
         } catch (error: any) {
           console.error('Login API Error:', error.response?.data || error.message)

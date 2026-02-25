@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_API
+const BACKEND_URL = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API || 'https://patriotic-reena-choregraphically.ngrok-free.dev'
 
 export async function GET(
   request: NextRequest,
@@ -104,7 +104,7 @@ function mapProxyPathToBackend(proxyPath: string): string {
   const pathMap: Record<string, string> = {
     'auth/token': '/api/auth/token/refresh/',
     'auth/authenticate': '/api/v1/authenticate/',
-    'auth/register': '/api/v1/register/',
+    'auth/register': '/api/auth/register/',
     'auth/logout': '/api/v1/logout/',
     'auth/refresh': '/api/v1/refresh/',
     'auth/otp-verification': '/api/v1/otp-verification/',
@@ -116,9 +116,11 @@ function mapProxyPathToBackend(proxyPath: string): string {
     return pathMap[proxyPath]
   }
 
-  if (proxyPath.startsWith('users/')) {
-    return `/api/v1/${proxyPath}/`
+  // Handle paths that already start with api/
+  if (proxyPath.startsWith('api/')) {
+    return `/${proxyPath}/`
   }
 
+  // Default fallback for legacy paths
   return `/api/v1/${proxyPath}/`
 }

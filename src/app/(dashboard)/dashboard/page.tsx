@@ -12,16 +12,22 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        // Immediately render from cache so the page isn't blank
         const storedUser = localStorage.getItem('user')
         if (storedUser) {
           setUser(JSON.parse(storedUser))
         }
 
-        const profileData = await authService.getProfile()
-        setUser(profileData)
-        localStorage.setItem('user', JSON.stringify(profileData))
+        // Try to refresh from the API — silently skip if it fails (expired token etc)
+        try {
+          const profileData = await authService.getProfile()
+          setUser(profileData)
+          localStorage.setItem('user', JSON.stringify(profileData))
+        } catch {
+          // Profile fetch failed — keep using cached user, token refresh happens automatically
+        }
       } catch (error) {
-        console.error('Failed to fetch user profile:', error)
+        console.error('Failed to load user data:', error)
       } finally {
         setIsLoading(false)
       }

@@ -67,7 +67,7 @@ export function TwoStepLogin() {
       <div className="bg-white rounded-[3rem] p-12 shadow-2xl border border-slate-100">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-serif font-bold mb-2">Welcome Back</h1>
-          <p className="text-slate-500">Sign in to access your patient dashboard.</p>
+          <p className="text-slate-500">Sign in to access your dashboard.</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -127,7 +127,7 @@ export function TwoStepLogin() {
         <div className="mt-10 pt-10 border-t border-slate-100 text-center">
           <p className="text-slate-500 mb-4">Don't have an account?</p>
           <Link className="text-teal-600 font-bold hover:underline" href="/register">
-            Create a Patient Profile
+            Create an Account
           </Link>
         </div>
       </div>

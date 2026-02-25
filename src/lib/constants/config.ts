@@ -9,7 +9,7 @@ export const APP_CONFIG = {
   const wsUrl = `${wsProtocol}//${wsHost}/ws/jobs/status/`
 
 export const API_CONFIG = {
-  baseUrl: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001/api/v1',
+  baseUrl: process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-reena-choregraphically.ngrok-free.dev/api/v1',
   wsUrl: wsUrl  || 'ws://localhost:8001/ws/jobs/status/',
   timeout: 30000,
 } as const

@@ -3,7 +3,7 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import type { User } from '@/types/auth'
 import { UserProfileCard } from '@/components/features/dashboard/user-profile-card'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { authService } from '@/lib/services/auth.service'
 import toast from 'react-hot-toast'
 
@@ -16,6 +16,11 @@ interface ProfileContentProps {
 export function ProfileContent({ user, isLoading, onUserUpdate }: ProfileContentProps) {
   const [isSaving, setIsSaving] = useState(false)
   const [name, setName] = useState(user?.name || '')
+
+  // Sync name field when user data loads asynchronously
+  useEffect(() => {
+    if (user?.name) setName(user.name)
+  }, [user?.name])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -116,12 +121,13 @@ export function ProfileContent({ user, isLoading, onUserUpdate }: ProfileContent
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
                 <span className="text-sm font-semibold text-slate-900">Status</span>
-                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${
-                  user?.is_active 
-                    ? 'bg-green-100 text-green-700' 
-                    : 'bg-red-100 text-red-700'
-                }`}>
-                  {user?.is_active ? 'Active' : 'Inactive'}
+                <span className={`px-3 py-1 text-xs font-semibold rounded-full ${isLoading
+                    ? 'bg-slate-100 text-slate-500'
+                    : user?.is_active !== false
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}>
+                  {isLoading ? '...' : user?.is_active !== false ? 'Active' : 'Inactive'}
                 </span>
               </div>
               <div className="p-4 bg-slate-50 rounded-lg">

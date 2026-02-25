@@ -19,11 +19,11 @@ export const registerSchema = z.object({
 })
 
 // OTP schema
-export const otpSchema = z.object({
-  otp: z.string().trim().min(6, 'Enter valid OTP').max(6, 'OTP must be 6 digits'),
-})
+// export const otpSchema = z.object({
+//   otp: z.string().trim().min(6, 'Enter valid OTP').max(6, 'OTP must be 6 digits'),
+// })
 
 // Type inference
 export type LoginFormData = z.infer<typeof loginSchema>
 export type RegisterFormData = z.infer<typeof registerSchema>
-export type OTPFormData = z.infer<typeof otpSchema>
+// export type OTPFormData = z.infer<typeof otpSchema>

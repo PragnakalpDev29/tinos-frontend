@@ -16,9 +16,8 @@ export const PageAccessConfig: PageAccessConfigType = {
     '/dashboard/appointments',
     '/dashboard/profile',
     '/dashboard/settings',
-    '/dashboard/patients',
   ],
-  patient: [
+  user: [
     '/dashboard',
     '/dashboard/appointments',
     '/dashboard/profile',

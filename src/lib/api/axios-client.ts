@@ -8,7 +8,7 @@
 
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API || 'http://localhost:8001'
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API || '/'
 
 export const axiosClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
@@ -32,23 +32,23 @@ axiosClient.interceptors.request.use(
         withCredentials: config.withCredentials,
       })
     }
-    
+
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('accessToken')
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`
       }
-      
+
       const csrfToken = document.cookie
         .split('; ')
         .find(row => row.startsWith('csrftoken='))
         ?.split('=')[1]
-      
+
       if (csrfToken && config.headers) {
         config.headers['X-CSRFToken'] = csrfToken
       }
     }
-    
+
     return config
   },
   (error: AxiosError) => {
@@ -70,7 +70,8 @@ axiosClient.interceptors.response.use(
     return response
   },
   async (error: AxiosError) => {
-    if (process.env.NODE_ENV === 'development') {
+    // Only log non-401 errors in dev — 401s are expected and handled by token refresh below
+    if (process.env.NODE_ENV === 'development' && error.response?.status !== 401) {
       console.error('API Response Error:', {
         status: error.response?.status,
         url: error.config?.url,
@@ -78,7 +79,7 @@ axiosClient.interceptors.response.use(
         message: error.message,
       })
     }
-    
+
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -87,12 +88,12 @@ axiosClient.interceptors.response.use(
       try {
         if (typeof window !== 'undefined') {
           const refreshToken = localStorage.getItem('refreshToken')
-          
+
           if (refreshToken) {
             const response = await axios.post(
-              `${BASE_URL}/api/auth/token/refresh/`,
+              `/proxy/api/auth/token/refresh/`,
               { refresh: refreshToken },
-              { 
+              {
                 withCredentials: true,
                 headers: { 'Content-Type': 'application/json' }
               }

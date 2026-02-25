@@ -30,8 +30,12 @@ export function useJobStatusWebSocket({
   const connect = useCallback(() => {
     try {
       // Get WebSocket URL from environment or construct it
+      // If running through Next.js proxy, we might want to use window.location.host
+      // But usually WS needs a direct connection or specific proxy config.
+      // Let's rely on the env var if set, otherwise fallback to window.location.host (but with ws://)
+
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const wsHost = process.env.NEXT_PUBLIC_WS_HOST || window.location.host
+      const wsHost = process.env.NEXT_PUBLIC_WS_HOST || 'localhost:8000' // Default to Django port
       const wsUrl = `${wsProtocol}//${wsHost}/ws/jobs/status/`
 
       console.log('Connecting to WebSocket:', wsUrl)
@@ -49,14 +53,14 @@ export function useJobStatusWebSocket({
         try {
           const data = JSON.parse(event.data) as JobStatusUpdate
           console.log('Received job status update:', data)
-          onStatusUpdate?.(data)
+          if (onStatusUpdate) onStatusUpdate(data)
         } catch (error) {
           console.error('Error parsing WebSocket message:', error)
         }
       }
 
       ws.onerror = (error) => {
-        console.error('WebSocket error:', error)
+        // console.error('WebSocket error:', error) // Quiet this down
         setConnectionError('WebSocket connection error')
       }
 

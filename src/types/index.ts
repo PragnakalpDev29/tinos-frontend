@@ -20,7 +20,7 @@ export interface Specialty {
 export interface Appointment {
   id: string
   doctorId: string
-  patientId: string
+  userId: string
   date: Date
   status: 'scheduled' | 'completed' | 'cancelled'
   type: 'video' | 'phone' | 'chat'
@@ -30,6 +30,6 @@ export interface User {
   id: string
   email: string
   name: string
-  role: 'patient' | 'doctor' | 'admin'
+  role: 'user' | 'doctor' | 'admin'
   avatar?: string
 }

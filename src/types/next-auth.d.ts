@@ -11,6 +11,10 @@ declare module 'next-auth' {
       is_active: boolean
       access: string
       refresh: string
+      role: {
+        id: string
+        name: string
+      }
     }
   }
 }

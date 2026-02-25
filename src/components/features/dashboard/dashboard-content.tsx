@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { MainTableLayout, Column } from '@/components/ui/data-table'
 import { Card, CardContent } from '@/components/ui/card'
 import { useJobStatusWebSocket } from '@/hooks/use-job-status-websocket'
 import type { User } from '@/types/auth'
-import { Plus, Filter, Wifi, WifiOff } from 'lucide-react'
-import mockJobsData from '@/data/mock-jobs.json'
+import { Plus, Filter, RefreshCcw } from 'lucide-react'
+import { jobService } from '@/lib/services/job.service'
 
 interface DashboardContentProps {
   user: User | null
@@ -18,22 +18,18 @@ interface DashboardContentProps {
 interface JobData {
   id: number
   job_id: string
-  job_name: string
-  job_type: 'SINGLE' | 'ARRAY'
-  s3_rna_bam: string
-  s3_deg_bam: string
-  s3_deg_jr: string
-  s3_gtex: string
-  s3_gencode: string
-  s3_output_bucket: string
-  s3_hla_output: string
-  s3_rna_bam_output: string
-  s3_logs_bucket: string
-  file_count: number
-  status: 'SUBMITTED' | 'PENDING' | 'RUNNABLE' | 'STARTING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED'
+  job_name?: string
+  run_name?: string
+  display_name: string
+  job_type?: 'SINGLE' | 'ARRAY'
+  display_type: string
+  status: string
   created_at: string
   updated_at: string
-  s3_deg_bam_consolidated: string | null
+  file_count?: number
+  cores?: number
+  is_child?: boolean
+  child_index?: number
 }
 
 const JOB_STATUS_OPTIONS = [
@@ -55,15 +51,43 @@ export function DashboardContent({ user, isLoading }: DashboardContentProps) {
   const [sortKey, setSortKey] = useState<string>('')
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
+  const [activeTab, setActiveTab] = useState<'preprocessing' | 'neoantigen'>('preprocessing')
 
-  // Initialize jobs data with state for real-time updates
-  const [jobsData, setJobsData] = useState<JobData[]>(mockJobsData as JobData[])
+  // State for jobs and loading
+  const [jobsData, setJobsData] = useState<JobData[]>([])
+  const [isDataLoading, setIsDataLoading] = useState(true)
+
+  const fetchJobs = useCallback(async () => {
+    try {
+      setIsDataLoading(true)
+      const data = activeTab === 'preprocessing'
+        ? await jobService.getPreprocessingJobs()
+        : await jobService.getNeoantigenJobs()
+
+      // Normalize data for the table
+      const normalizedData = data.map(job => ({
+        ...job,
+        display_name: job.job_name || job.run_name || 'Unnamed Job',
+        display_type: job.job_type || (job.cores ? `${job.cores} Cores` : 'Pipeline')
+      }))
+
+      setJobsData(normalizedData)
+    } catch (error) {
+      console.error(`Failed to fetch ${activeTab} jobs:`, error)
+    } finally {
+      setIsDataLoading(false)
+    }
+  }, [activeTab])
+
+  useEffect(() => {
+    fetchJobs()
+  }, [fetchJobs])
 
   // Handle real-time job status updates via WebSocket
   const handleStatusUpdate = useCallback((update: { job_id: string; status: JobData['status']; updated_at: string }) => {
-    setJobsData(prevJobs => 
-      prevJobs.map(job => 
-        job.job_id === update.job_id 
+    setJobsData(prevJobs =>
+      prevJobs.map(job =>
+        job.job_id === update.job_id
           ? { ...job, status: update.status, updated_at: update.updated_at }
           : job
       )
@@ -82,29 +106,51 @@ export function DashboardContent({ user, isLoading }: DashboardContentProps) {
       header: 'ID',
       sortable: true,
       render: (item) => (
-        <span className="font-medium text-teal-600">#{item.id}</span>
+        <Link
+          href={`/dashboard/jobs/${item.id}?type=${activeTab}`}
+          className="font-medium text-teal-600 hover:text-teal-700 hover:underline"
+        >
+          #{item.id}
+        </Link>
       ),
     },
     {
       key: 'job_name',
       header: 'Job Name',
       sortable: true,
-      render: (item) => (
-        <div className="max-w-xs">
-          <span className="font-medium truncate block">{item.job_name}</span>
-          <span className="text-xs text-slate-500 truncate block">{item.job_id}</span>
-        </div>
-      ),
+      render: (item) => {
+        const href = `/dashboard/jobs/${item.id}?type=${activeTab}`
+        return (
+          <Link href={href} className="hover:opacity-80 transition-opacity block">
+            <div className="max-w-xs">
+              <div className="flex items-center gap-2">
+                <span className="font-medium truncate block text-slate-900">
+                  {item.is_child
+                    ? (item.job_name || item.display_name).replace(/ \[Child \d+\]$/, '')
+                    : item.display_name}
+                </span>
+                {item.is_child && (
+                  <span className="shrink-0 text-[10px] font-bold bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">
+                    Child {item.child_index}
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-slate-500 truncate block font-mono">{item.job_id}</span>
+            </div>
+          </Link>
+        )
+      },
     },
     {
       key: 'job_type',
       header: 'Type',
       sortable: true,
       render: (item) => (
-        <span className={`px-2 py-1 rounded text-xs font-semibold ${
-          item.job_type === 'SINGLE' ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'
-        }`}>
-          {item.job_type}
+        <span className={`px-2 py-1 rounded text-xs font-semibold ${item.job_type === 'SINGLE' ? 'bg-blue-100 text-blue-700' :
+          item.job_type === 'ARRAY' ? 'bg-purple-100 text-purple-700' :
+            'bg-slate-100 text-slate-700'
+          }`}>
+          {item.display_type}
         </span>
       ),
     },
@@ -124,6 +170,7 @@ export function DashboardContent({ user, isLoading }: DashboardContentProps) {
         const statusColors: Record<string, string> = {
           SUBMITTED: 'bg-blue-100 text-blue-700',
           PENDING: 'bg-slate-100 text-slate-700',
+          PENDING_PREPROCESSING: 'bg-slate-100 text-slate-700 italic border border-slate-200',
           RUNNABLE: 'bg-cyan-100 text-cyan-700',
           STARTING: 'bg-indigo-100 text-indigo-700',
           RUNNING: 'bg-amber-100 text-amber-700',
@@ -132,7 +179,7 @@ export function DashboardContent({ user, isLoading }: DashboardContentProps) {
         }
         return (
           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${statusColors[item.status] || 'bg-gray-100 text-gray-700'}`}>
-            {item.status}
+            {item.status.replace(/_/g, ' ')}
           </span>
         )
       },
@@ -142,9 +189,9 @@ export function DashboardContent({ user, isLoading }: DashboardContentProps) {
       header: 'Created At',
       sortable: true,
       render: (item) => (
-        <span className="text-sm">{new Date(item.created_at).toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'short', 
+        <span className="text-sm">{new Date(item.created_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
           day: 'numeric',
           hour: '2-digit',
           minute: '2-digit'
@@ -156,27 +203,38 @@ export function DashboardContent({ user, isLoading }: DashboardContentProps) {
       header: 'Updated At',
       sortable: true,
       render: (item) => (
-        <span className="text-sm">{new Date(item.updated_at).toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'short', 
+        <span className="text-sm">{new Date(item.updated_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
           day: 'numeric',
           hour: '2-digit',
           minute: '2-digit'
         })}</span>
       ),
     },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (item) => (
+        <Link
+          href={`/dashboard/jobs/${item.id}?type=${activeTab}`}
+          className="inline-flex items-center px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-teal-50 hover:text-teal-700 transition-colors text-xs font-semibold"
+        >
+          View
+        </Link>
+      ),
+    },
   ]
 
   const filteredData = jobsData.filter((item) => {
     const matchesSearch = !searchQuery || (
-      item.job_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.job_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.job_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.status.toLowerCase().includes(searchQuery.toLowerCase())
     )
-    
+
     const matchesStatus = statusFilter === 'ALL' || item.status === statusFilter
-    
+
     return matchesSearch && matchesStatus
   })
 
@@ -202,8 +260,28 @@ export function DashboardContent({ user, isLoading }: DashboardContentProps) {
           <h1 className="text-3xl font-bold text-slate-900">
             Welcome back, {user?.name || 'User'}!
           </h1>
-          <p className="text-slate-600 mt-2">
-            {isLoading ? 'Loading your jobs...' : "Here's your preprocessing jobs overview."}
+          <div className="flex items-center gap-4 mt-4">
+            <button
+              onClick={() => setActiveTab('preprocessing')}
+              className={`pb-2 px-1 text-sm font-semibold transition-colors border-b-2 ${activeTab === 'preprocessing'
+                ? 'text-teal-600 border-teal-600'
+                : 'text-slate-500 border-transparent hover:text-slate-700'
+                }`}
+            >
+              Preprocessing Jobs
+            </button>
+            <button
+              onClick={() => setActiveTab('neoantigen')}
+              className={`pb-2 px-1 text-sm font-semibold transition-colors border-b-2 ${activeTab === 'neoantigen'
+                ? 'text-teal-600 border-teal-600'
+                : 'text-slate-500 border-transparent hover:text-slate-700'
+                }`}
+            >
+              Neoantigen Jobs
+            </button>
+          </div>
+          <p className="text-slate-500 text-xs mt-2 italic">
+            Note: Successful Preprocessing jobs automatically trigger a corresponding Neoantigen job.
           </p>
         </div>
         {/* <div className="flex items-center gap-2">
@@ -229,10 +307,10 @@ export function DashboardContent({ user, isLoading }: DashboardContentProps) {
       <Card variant="elevated" className="shadow-lg">
         <CardContent className="p-6">
           <MainTableLayout
-            title="Preprocessing Jobs"
-            columns={columns}
+            title={activeTab === 'preprocessing' ? "Preprocessing Jobs" : "Neoantigen Jobs"}
+            columns={activeTab === 'preprocessing' ? columns : columns.filter(c => c.key !== 'file_count')}
             data={paginatedData}
-            isLoading={isLoading}
+            isLoading={isLoading || isDataLoading}
             searchPlaceholder="Search by job name, job ID, type, or status..."
             onSearch={setSearchQuery}
             filters={
@@ -255,12 +333,23 @@ export function DashboardContent({ user, isLoading }: DashboardContentProps) {
               </div>
             }
             actionButtons={
-              <Link href="/preprocessing">
-                <button className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">
-                  <Plus className="w-4 h-4" />
-                  <span className="hidden sm:inline">New Job</span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={fetchJobs}
+                  className="p-2 text-slate-500 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  title="Refresh data"
+                >
+                  <RefreshCcw className={`w-4 h-4 ${isDataLoading ? 'animate-spin' : ''}`} />
                 </button>
-              </Link>
+                <Link href={activeTab === 'preprocessing' ? "/preprocessing" : "/neoantigen"}>
+                  <button className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">
+                    <Plus className="w-4 h-4" />
+                    <span className="hidden sm:inline">
+                      {activeTab === 'preprocessing' ? 'Start New Pipeline' : 'New Neoantigen Job'}
+                    </span>
+                  </button>
+                </Link>
+              </div>
             }
             pagination={true}
             currentPage={currentPage}
@@ -272,7 +361,7 @@ export function DashboardContent({ user, isLoading }: DashboardContentProps) {
             onSort={handleSort}
             sortKey={sortKey}
             sortDirection={sortDirection}
-            onRowClick={(job) => router.push(`/dashboard/jobs/${job.id}`)}
+            onRowClick={(job) => router.push(`/dashboard/jobs/${job.id}?type=${activeTab}`)}
           />
         </CardContent>
       </Card>
