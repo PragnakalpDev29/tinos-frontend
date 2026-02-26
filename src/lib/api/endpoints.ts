@@ -1,6 +1,6 @@
 export const API_ENDPOINTS = {
   AUTH: {
-    REGISTER: '/api/auth/register/',
+    REGISTER: '/proxy/api/auth/register/',
     LOGIN: '/proxy/api/auth/login/',
     LOGOUT: '/proxy/api/auth/logout/',
     PROFILE: '/proxy/api/auth/profile/',

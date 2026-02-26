@@ -15,7 +15,7 @@ const authOptions: AuthOptions = {
       async authorize(credentials) {
         try {
           // Use server-side URL, bypassing the proxy
-          const BASE_URL = process.env.BACKEND_API_URL || 'https://patriotic-reena-choregraphically.ngrok-free.dev'
+          const BASE_URL = process.env.BACKEND_API_URL || 'http://127.0.0.1:8000'
 
           const response = await axios.post(
             `${BASE_URL}/api/auth/login/`,

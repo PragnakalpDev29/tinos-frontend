@@ -17,7 +17,7 @@ export const axiosClient: AxiosInstance = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
   },
-  withCredentials: true,
+  withCredentials: false,
 })
 
 // Request interceptor - add auth token and CSRF token
@@ -94,7 +94,6 @@ axiosClient.interceptors.response.use(
               `/proxy/api/auth/token/refresh/`,
               { refresh: refreshToken },
               {
-                withCredentials: true,
                 headers: { 'Content-Type': 'application/json' }
               }
             )

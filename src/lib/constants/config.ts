@@ -10,7 +10,7 @@ export const APP_CONFIG = {
 
 export const API_CONFIG = {
   baseUrl: process.env.NEXT_PUBLIC_API_URL || 'https://patriotic-reena-choregraphically.ngrok-free.dev/api/v1',
-  wsUrl: wsUrl  || 'ws://localhost:8001/ws/jobs/status/',
+  wsUrl: wsUrl  || 'ws://patriotic-reena-choregraphically.ngrok-free.dev/ws/jobs/status/',
   timeout: 30000,
 } as const
 
