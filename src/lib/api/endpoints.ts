@@ -1,20 +1,20 @@
 export const API_ENDPOINTS = {
   AUTH: {
     REGISTER: '/api/auth/register/',
-    LOGIN: '/proxy/api/auth/login/',
-    LOGOUT: '/proxy/api/auth/logout/',
-    PROFILE: '/proxy/api/auth/profile/',
-    CHANGE_PASSWORD: '/proxy/api/auth/change-password/',
-    REFRESH: '/proxy/api/auth/token/refresh/',
+    LOGIN: '/api/auth/login/',
+    LOGOUT: '/api/auth/logout/',
+    PROFILE: '/api/auth/profile/',
+    CHANGE_PASSWORD: '/api/auth/change-password/',
+    REFRESH: '/api/auth/token/refresh/',
   },
   USERS: {
     LIST: '/users',
     DETAIL: (id: string) => `/users/${id}`,
   },
   JOBS: {
-    SUBMIT: '/proxy/api/submit-job/',
-    SUBMIT_PREPROCESSING: '/proxy/api/submit-preprocessing/',
-    SUBMIT_NEOANTIGEN: '/proxy/api/submit-neoantigen/',
-    PIPELINE_CONFIG: '/proxy/api/pipeline-config/',
+    SUBMIT: '/api/submit-job/',
+    SUBMIT_PREPROCESSING: '/api/submit-preprocessing/',
+    SUBMIT_NEOANTIGEN: '/api/submit-neoantigen/',
+    PIPELINE_CONFIG: '/api/pipeline-config/',
   },
 } as const
