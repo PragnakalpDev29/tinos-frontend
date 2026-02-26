@@ -30,6 +30,11 @@ export function UserProfileCard({ user, isLoading }: UserProfileCardProps) {
     return null
   }
 
+  console.log('User Profile Data:', user)
+  console.log('User Name:', user.name)
+  console.log('User Email:', user.email)
+  console.log('User Date Joined:', user.date_joined)
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('en-US', { 
@@ -39,7 +44,8 @@ export function UserProfileCard({ user, isLoading }: UserProfileCardProps) {
     })
   }
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | undefined | null) => {
+    if (!name) return 'U'
     return name
       .split(' ')
       .map(n => n[0])
