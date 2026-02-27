@@ -1,7 +1,6 @@
 'use client'
 
 import { Button, Input, Link } from '@/components/ui'
-import { CheckCircle } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { registerSchema, type RegisterFormData } from '@/validators/auth'
@@ -129,7 +128,8 @@ export function RegisterForm() {
             )}
           </div>
           
-         
+        
+          
           <Button
             className="w-full bg-teal-600 text-white py-5 rounded-full font-bold text-lg hover:bg-teal-700 transition-all shadow-xl shadow-teal-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
             type="submit"

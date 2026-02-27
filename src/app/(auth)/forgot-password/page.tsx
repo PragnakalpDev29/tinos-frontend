@@ -1,4 +1,4 @@
-import { Header, MobileMenu } from '@/components/layouts'
+import { Header,  MobileMenu } from '@/components/layouts'
 import { ForgotPasswordForm } from '@/components/features/auth'
 
 export default function ForgotPasswordPage() {
