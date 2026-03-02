@@ -1,7 +1,7 @@
 'use client'
 
 import { Header } from './header'
-// import { Footer } from './footer'
+import { Footer } from './footer'
 import { MobileMenu } from './mobile-menu'
 
 interface MarketingLayoutProps {
@@ -14,7 +14,7 @@ export function MarketingLayout({ children }: MarketingLayoutProps) {
       <Header />
       <MobileMenu />
       {children}
-      {/* <Footer /> */}
+      <Footer />
     </div>
   )
 }

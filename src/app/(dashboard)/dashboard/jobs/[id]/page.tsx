@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Copy, Check, CheckCircle, XCircle, Loader2, GitBranch, Clock } from 'lucide-react'
+import { ArrowLeft, Copy, Check, CheckCircle, XCircle, Loader2, GitBranch, Clock, AlertTriangle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useJobStatusWebSocket } from '@/hooks/use-job-status-websocket'
@@ -42,6 +42,9 @@ interface JobData {
   s3_proteomics_validation?: string
   s3_output?: string
   s3_logs?: string
+
+  // Failure info
+  failure_reason?: string | null
 }
 
 interface ChildJob {
@@ -50,6 +53,7 @@ interface ChildJob {
   label: string
   status: string
   updated_at: string
+  failure_reason?: string | null
 }
 
 // Status config used both for parent and children
@@ -220,9 +224,21 @@ export default function JobDetailsPage() {
             <XCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-red-900">Job Failed</h3>
-              <p className="text-sm text-red-700 mt-1">
-                This job encountered an error during processing. Please check the logs for more details or contact support if the issue persists.
-              </p>
+              {job.failure_reason ? (
+                <>
+                  <p className="text-sm text-red-700 mt-1 font-medium">Reason:</p>
+                  <p className="text-sm text-red-800 mt-0.5 font-mono bg-red-100 rounded px-3 py-2 break-words">
+                    {job.failure_reason}
+                  </p>
+                  <p className="text-xs text-red-500 mt-2">
+                    Check the S3 logs bucket for detailed container output.
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-red-700 mt-1">
+                  This job encountered an error during processing. Check the logs for details.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -323,41 +339,71 @@ export default function JobDetailsPage() {
               <GitBranch className="w-5 h-5 text-purple-600" />
               Child Jobs
               <span className="ml-1 text-sm font-normal text-slate-500">({children.length} files)</span>
+              {children.some(c => c.status === 'FAILED') && (
+                <span className="ml-auto text-xs font-semibold bg-red-100 text-red-700 px-2 py-0.5 rounded-full border border-red-200">
+                  ⚠ {children.filter(c => c.status === 'FAILED').length} failed
+                </span>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Child failure warning banner */}
+            {children.some(c => c.status === 'FAILED') && (
+              <div className="mb-4 bg-red-50 border-l-4 border-red-500 p-3 rounded-lg flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-red-900">
+                    {children.filter(c => c.status === 'FAILED').length} child job(s) failed
+                  </p>
+                  <p className="text-xs text-red-700 mt-0.5">
+                    Neoantigen pipeline will <strong>not</strong> be auto-triggered — all child jobs must succeed first.
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-4">
               {children.map((child) => {
                 const cfg = STATUS_CONFIG[child.status] || STATUS_CONFIG.SUBMITTED
                 const isDone = child.status === 'SUCCEEDED' || child.status === 'FAILED'
                 return (
-                  <div key={child.child_index} className="flex items-center gap-4 p-3 rounded-lg border border-slate-100 bg-slate-50">
-                    {/* Label */}
-                    <div className="w-20 flex-shrink-0">
-                      <span className="text-sm font-semibold text-slate-700">{child.label}</span>
+                  <div key={child.child_index} className={`rounded-lg border p-3 ${child.status === 'FAILED' ? 'bg-red-50 border-red-200' : 'bg-slate-50 border-slate-100'
+                    }`}>
+                    <div className="flex items-center gap-4">
+                      {/* Label */}
+                      <div className="w-20 flex-shrink-0">
+                        <span className="text-sm font-semibold text-slate-700">{child.label}</span>
+                      </div>
+
+                      {/* Progress bar */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${cfg.bgColor} ${cfg.textColor} ${cfg.borderColor}`}>
+                            <StatusIcon status={child.status} />
+                            {cfg.label}
+                          </span>
+                          <span className="text-xs text-slate-400 truncate font-mono">{child.job_id}</span>
+                        </div>
+                        <div className="relative w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                          <div
+                            className={`absolute top-0 left-0 h-full ${cfg.color} transition-all duration-500 rounded-full ${!isDone ? 'animate-pulse' : ''}`}
+                            style={{ width: `${cfg.progress}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Percentage */}
+                      <div className="w-10 text-right flex-shrink-0">
+                        <span className="text-sm font-semibold text-slate-600">{cfg.progress}%</span>
+                      </div>
                     </div>
 
-                    {/* Progress bar */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium border ${cfg.bgColor} ${cfg.textColor} ${cfg.borderColor}`}>
-                          <StatusIcon status={child.status} />
-                          {cfg.label}
-                        </span>
-                        <span className="text-xs text-slate-400 truncate font-mono">{child.job_id}</span>
+                    {/* Per-child failure reason */}
+                    {child.status === 'FAILED' && child.failure_reason && (
+                      <div className="mt-2 ml-24 text-xs font-mono text-red-800 bg-red-100 rounded px-2 py-1.5 break-words">
+                        {child.failure_reason}
                       </div>
-                      <div className="relative w-full h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div
-                          className={`absolute top-0 left-0 h-full ${cfg.color} transition-all duration-500 rounded-full ${!isDone ? 'animate-pulse' : ''}`}
-                          style={{ width: `${cfg.progress}%` }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Percentage */}
-                    <div className="w-10 text-right flex-shrink-0">
-                      <span className="text-sm font-semibold text-slate-600">{cfg.progress}%</span>
-                    </div>
+                    )}
                   </div>
                 )
               })}
