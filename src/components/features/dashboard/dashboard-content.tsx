@@ -44,9 +44,6 @@ const JOB_STATUS_OPTIONS = [
 ]
 
 export function DashboardContent({ user, isLoading }: DashboardContentProps) {
-  console.log('Dashboard Content - User Data:', user)
-  console.log('Dashboard Content - isLoading:', isLoading)
-  
   const router = useRouter()
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -67,13 +64,6 @@ export function DashboardContent({ user, isLoading }: DashboardContentProps) {
         ? await jobService.getPreprocessingJobs()
         : await jobService.getNeoantigenJobs()
 
-      // Ensure data is an array before mapping
-      if (!Array.isArray(data)) {
-        console.error(`Expected array but got:`, data)
-        setJobsData([])
-        return
-      }
-
       // Normalize data for the table
       const normalizedData = data.map(job => ({
         ...job,
@@ -84,7 +74,6 @@ export function DashboardContent({ user, isLoading }: DashboardContentProps) {
       setJobsData(normalizedData)
     } catch (error) {
       console.error(`Failed to fetch ${activeTab} jobs:`, error)
-      setJobsData([])
     } finally {
       setIsDataLoading(false)
     }

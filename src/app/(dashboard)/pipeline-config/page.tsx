@@ -28,10 +28,6 @@ const CATEGORY_ICON: Record<string, React.ReactNode> = {
 }
 
 function groupBy<T>(arr: T[], key: keyof T): Record<string, T[]> {
-    if (!Array.isArray(arr)) {
-        console.error('groupBy: Expected array but got:', arr)
-        return {}
-    }
     return arr.reduce((acc, item) => {
         const k = String(item[key])
         acc[k] = acc[k] ? [...acc[k], item] : [item]
@@ -50,14 +46,9 @@ export default function PipelineConfigPage() {
         try {
             setIsLoading(true)
             const res = await axiosClient.get<ConfigRow[]>(API_ENDPOINTS.JOBS.PIPELINE_CONFIG)
-            const data = Array.isArray(res.data) ? res.data : []
-            console.log('Pipeline Config Data:', data)
-            console.log('Raw API Response:', res)
-            setRows(data)
+            setRows(res.data)
         } catch (e: any) {
-            console.error('Failed to load pipeline configuration:', e)
             toast.error('Failed to load pipeline configuration.')
-            setRows([])
         } finally {
             setIsLoading(false)
         }

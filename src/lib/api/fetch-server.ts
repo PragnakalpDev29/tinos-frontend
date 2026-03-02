@@ -4,7 +4,7 @@
  * Features: Built-in caching, ISR, On-demand revalidation
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API || 'https://patriotic-reena-choregraphically.ngrok-free.dev'
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API || 'http://localhost:8001'
 const API_TOKEN = process.env.API_TOKEN
 
 export interface FetchOptions extends RequestInit {

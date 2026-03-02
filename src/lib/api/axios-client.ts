@@ -10,15 +10,19 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResp
 
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API || '/'
 
+const isNgrok = BASE_URL.includes('ngrok')
+
 export const axiosClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    ...(isNgrok ? { 'ngrok-skip-browser-warning': '69420' } : {}),
   },
-  withCredentials: false,
+  withCredentials: true,
 })
+
 
 // Request interceptor - add auth token and CSRF token
 axiosClient.interceptors.request.use(
@@ -91,9 +95,10 @@ axiosClient.interceptors.response.use(
 
           if (refreshToken) {
             const response = await axios.post(
-              `/proxy/api/auth/token/refresh/`,
+              `/api/auth/token/refresh/`,
               { refresh: refreshToken },
               {
+                withCredentials: true,
                 headers: { 'Content-Type': 'application/json' }
               }
             )

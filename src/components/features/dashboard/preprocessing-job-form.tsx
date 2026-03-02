@@ -40,6 +40,12 @@ export function PreprocessingJobForm() {
   })
 
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [s3Validation, setS3Validation] = useState<{
+    status: 'idle' | 'checking' | 'valid' | 'invalid'
+    message?: string
+    fileCount?: number
+    files?: string[]
+  }>({ status: 'idle' })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -47,13 +53,64 @@ export function PreprocessingJobForm() {
       ...prev,
       [name]: name === 'fileCount' ? parseInt(value) || 1 : value
     }))
+    // Reset validation when S3 RNA BAM path changes
+    if (name === 's3RnaBam') {
+      setS3Validation({ status: 'idle' })
+    }
+  }
+
+  const validateS3Path = async (s3Path: string) => {
+    setS3Validation({ status: 'checking' })
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API || ''
+      const isNgrok = backendUrl.includes('ngrok')
+      const response = await fetch(`${backendUrl}/proxy/api/validate-s3-path/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(isNgrok ? { 'ngrok-skip-browser-warning': '69420' } : {}),
+          'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('accessToken') : ''}`,
+        },
+        body: JSON.stringify({ s3_path: s3Path }),
+      })
+
+      const data = await response.json()
+      if (data.valid) {
+        setS3Validation({
+          status: 'valid',
+          message: data.message,
+          fileCount: data.file_count,
+          files: data.files,
+        })
+      } else {
+        setS3Validation({ status: 'invalid', message: data.error || 'No BAM files found at the specified path.' })
+      }
+      return data.valid
+    } catch (err) {
+      setS3Validation({ status: 'invalid', message: 'Could not connect to server to validate S3 path.' })
+      return false
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
+    if (!formData.s3RnaBam.trim()) {
+      toast.error('S3 RNA BAM Path is required.')
+      return
+    }
 
+    setIsSubmitting(true)
     try {
+      // Step 1: Validate the S3 path first
+      const isValid = await validateS3Path(formData.s3RnaBam)
+      if (!isValid) {
+        const msg = s3Validation.status === 'invalid' ? s3Validation.message : 'No BAM files found at the specified S3 path.'
+        toast.error(msg || 'Invalid S3 path.', { duration: 6000 })
+        setIsSubmitting(false)
+        return
+      }
+
+      // Step 2: Submit the job
       const payload = {
         s3_rna_bam: formData.s3RnaBam,
         s3_deg_bam: formData.s3DegBam,
@@ -68,14 +125,14 @@ export function PreprocessingJobForm() {
       }
 
       const response = await jobService.submitPreprocessingJob(payload)
-      
+
       toast.success(
         `Job submitted successfully! Job ID: ${response.jobId}`,
         { duration: 5000 }
       )
-      
+
       console.log('Job submission response:', response)
-      
+      setS3Validation({ status: 'idle' })
       setFormData({
         jobName: '',
         jobType: 'SINGLE',
@@ -94,9 +151,9 @@ export function PreprocessingJobForm() {
       })
     } catch (error: any) {
       console.error('Error submitting job:', error)
-      const errorMessage = error?.response?.data?.error || 
-                          error?.message || 
-                          'Failed to submit preprocessing job'
+      const errorMessage = error?.response?.data?.error ||
+        error?.message ||
+        'Failed to submit preprocessing job'
       toast.error(errorMessage, { duration: 5000 })
     } finally {
       setIsSubmitting(false)
@@ -196,10 +253,30 @@ export function PreprocessingJobForm() {
               value={formData.s3RnaBam}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent ${s3Validation.status === 'valid' ? 'border-green-400 bg-green-50' :
+                s3Validation.status === 'invalid' ? 'border-red-400 bg-red-50' :
+                  'border-slate-300'
+                }`}
               placeholder="s3://bucket-name/path/to/rna-bam"
             />
+            {s3Validation.status === 'checking' && (
+              <p className="mt-1 text-sm text-blue-600 flex items-center gap-1">
+                <span className="animate-spin inline-block w-3 h-3 border-2 border-blue-400 border-t-transparent rounded-full"></span>
+                Checking S3 path for BAM files...
+              </p>
+            )}
+            {s3Validation.status === 'valid' && (
+              <p className="mt-1 text-sm text-green-700 font-medium">
+                ✅ {s3Validation.message}
+              </p>
+            )}
+            {s3Validation.status === 'invalid' && (
+              <p className="mt-1 text-sm text-red-600 font-medium">
+                ❌ {s3Validation.message}
+              </p>
+            )}
           </div>
+
 
           <div>
             <label htmlFor="s3DegBam" className="block text-sm font-medium text-slate-700 mb-2">
