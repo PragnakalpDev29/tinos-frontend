@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { jobService } from '@/lib/services/job.service'
 import toast from 'react-hot-toast'
-import { Info, Cpu, FlaskConical, FolderOpen, Database, Check, ChevronRight } from 'lucide-react'
+import { Info, Cpu, FlaskConical, FolderOpen, Database, Check, ChevronRight, AlertTriangle, Clock } from 'lucide-react'
 
 const STAGE1_PATHS = [
     { label: 'DEG Target (DMSO)', value: 's3://epicode-neoantigen/pragnakalp_preprocessing_input/deg/rna/gsc_dmso/' },
@@ -47,6 +47,7 @@ export function UnifiedPipelineForm() {
         s3_rna_bam: '',
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [queueFull, setQueueFull] = useState<{ message: string; running: number; queued: number } | null>(null)
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
@@ -61,6 +62,7 @@ export function UnifiedPipelineForm() {
         }
 
         setIsSubmitting(true)
+        setQueueFull(null)  // Clear any previous queue-full banner
         try {
             const response = await jobService.submitPreprocessingJob(formData)
             toast.success(
@@ -73,8 +75,18 @@ export function UnifiedPipelineForm() {
             )
             setFormData({ job_name: '', s3_rna_bam: '' })
         } catch (error: any) {
-            const errorMessage = error?.response?.data?.error || error?.message || 'Failed to start pipeline'
-            toast.error(errorMessage)
+            const errData = error?.response?.data
+            if (errData?.error === 'queue_full') {
+                // Show specific queue-full banner
+                setQueueFull({
+                    message: errData.message,
+                    running: errData.running ?? 0,
+                    queued: errData.queued ?? 0,
+                })
+            } else {
+                const errorMessage = errData?.error || errData?.message || error?.message || 'Failed to start pipeline'
+                toast.error(errorMessage)
+            }
         } finally {
             setIsSubmitting(false)
         }
@@ -84,6 +96,40 @@ export function UnifiedPipelineForm() {
 
     return (
         <div className="max-w-6xl mx-auto space-y-8">
+
+            {/* ── Queue Full Banner ── */}
+            {queueFull && (
+                <div className="flex items-start gap-4 bg-amber-50 border border-amber-300 rounded-xl p-5 shadow-sm">
+                    <div className="flex-shrink-0 mt-0.5">
+                        <AlertTriangle className="w-6 h-6 text-amber-500" />
+                    </div>
+                    <div className="flex-1">
+                        <p className="font-semibold text-amber-900 text-base">Compute Queue is Currently Full</p>
+                        <p className="text-sm text-amber-800 mt-1">{queueFull.message}</p>
+                        <div className="flex items-center gap-4 mt-3">
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold border border-amber-200">
+                                <span className="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
+                                {queueFull.running} Running
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-semibold border border-amber-200">
+                                <Clock className="w-3 h-3" />
+                                {queueFull.queued} Waiting
+                            </span>
+                        </div>
+                        <p className="text-xs text-amber-600 mt-2">
+                            💡 Go to the <strong>Dashboard</strong> to monitor running jobs. You can retry submission once a job completes.
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => setQueueFull(null)}
+                        className="text-amber-400 hover:text-amber-600 text-xl font-bold leading-none flex-shrink-0"
+                        title="Dismiss"
+                    >
+                        ×
+                    </button>
+                </div>
+            )}
+
             {/* Form Card */}
             <form onSubmit={handleSubmit}>
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-8 space-y-6">

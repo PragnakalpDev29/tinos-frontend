@@ -41,6 +41,9 @@ axiosClient.interceptors.request.use(
       const token = localStorage.getItem('accessToken')
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Using Token:', token.substring(0, 10) + '...')
+        }
       }
 
       const csrfToken = document.cookie
@@ -95,11 +98,14 @@ axiosClient.interceptors.response.use(
 
           if (refreshToken) {
             const response = await axios.post(
-              `/api/auth/token/refresh/`,
+              `${BASE_URL}/api/auth/token/refresh/`,
               { refresh: refreshToken },
               {
                 withCredentials: true,
-                headers: { 'Content-Type': 'application/json' }
+                headers: {
+                  'Content-Type': 'application/json',
+                  'ngrok-skip-browser-warning': '69420'
+                }
               }
             )
 
@@ -107,6 +113,11 @@ axiosClient.interceptors.response.use(
             localStorage.setItem('accessToken', access)
             if (refresh) {
               localStorage.setItem('refreshToken', refresh)
+            }
+
+            // Also update the cookie for the proxy/middleware
+            if (typeof window !== 'undefined') {
+              document.cookie = `accessToken=${access}; path=/; max-age=${7 * 24 * 3600}; SameSite=Lax`
             }
 
             if (originalRequest.headers) {

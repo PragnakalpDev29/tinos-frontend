@@ -24,10 +24,11 @@ export async function fetchServer<T>(
   options: FetchOptions = {}
 ): Promise<T> {
   const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`
-  
+
   const defaultHeaders: HeadersInit = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'ngrok-skip-browser-warning': '69420',
   }
 
   if (API_TOKEN) {
@@ -48,8 +49,8 @@ export async function fetchServer<T>(
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}))
       throw new Error(
-        errorData.detail || 
-        errorData.error || 
+        errorData.detail ||
+        errorData.error ||
         `HTTP ${res.status}: ${res.statusText}`
       )
     }

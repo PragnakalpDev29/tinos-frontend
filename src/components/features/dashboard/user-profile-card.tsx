@@ -40,9 +40,6 @@ export function UserProfileCard({ user, isLoading }: UserProfileCardProps) {
   }
 
   const getInitials = (name: string) => {
-    if (!name || typeof name !== 'string') {
-      return 'U'
-    }
     return name
       .trim()
       .split(' ')
