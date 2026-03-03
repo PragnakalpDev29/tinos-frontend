@@ -35,7 +35,7 @@ export function useJobStatusWebSocket({
       // Let's rely on the env var if set, otherwise fallback to window.location.host (but with ws://)
 
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const wsHost = process.env.NEXT_PUBLIC_WS_HOST || 'localhost:8000' // Default to Django port
+      const wsHost = process.env.NEXT_PUBLIC_WS_HOST || 'patriotic-reena-choregraphically.ngrok-free.dev' // Default to Django port
       const wsUrl = `${wsProtocol}//${wsHost}/ws/jobs/status/`
 
       console.log('Connecting to WebSocket:', wsUrl)

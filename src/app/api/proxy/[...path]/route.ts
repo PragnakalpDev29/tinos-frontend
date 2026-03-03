@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const BACKEND_URL = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API || 'http://localhost:8000'
+const BACKEND_URL = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API || 'http://patriotic-reena-choregraphically.ngrok-free.dev'
 
 export async function GET(
   request: NextRequest,
