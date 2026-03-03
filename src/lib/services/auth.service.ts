@@ -23,13 +23,15 @@ export const authService = {
    */
   register: async (data: RegisterDto): Promise<RegisterResponse> => {
     const response = await post<RegisterResponse>(API_ENDPOINTS.AUTH.REGISTER, data)
-    console.log("Register response--->",response)
+    console.log("Register response--->", response)
     if (response.tokens?.access) {
       try {
         if (typeof window !== 'undefined') {
           localStorage.setItem('accessToken', response.tokens.access)
           localStorage.setItem('refreshToken', response.tokens.refresh)
           localStorage.setItem('user', JSON.stringify(response.user))
+          // Also set a cookie so middleware can detect auth server-side
+          document.cookie = `accessToken=${response.tokens.access}; path=/; max-age=${7 * 24 * 3600}; SameSite=Lax`
         }
       } catch (error) {
         console.error('Failed to store tokens:', error)
@@ -52,6 +54,8 @@ export const authService = {
           localStorage.setItem('accessToken', response.tokens.access)
           localStorage.setItem('refreshToken', response.tokens.refresh)
           localStorage.setItem('user', JSON.stringify(response.user))
+          // Also set a cookie so middleware can detect auth server-side
+          document.cookie = `accessToken=${response.tokens.access}; path=/; max-age=${7 * 24 * 3600}; SameSite=Lax`
         }
       } catch (error) {
         console.error('Failed to store tokens:', error)
@@ -67,8 +71,8 @@ export const authService = {
    */
   logout: async (): Promise<LogoutResponse> => {
     try {
-      const refreshToken = typeof window !== 'undefined' 
-        ? localStorage.getItem('refreshToken') 
+      const refreshToken = typeof window !== 'undefined'
+        ? localStorage.getItem('refreshToken')
         : null
 
       if (!refreshToken) {
@@ -77,13 +81,15 @@ export const authService = {
 
       const payload: LogoutRequest = { refresh: refreshToken }
       const response = await post<LogoutResponse>(API_ENDPOINTS.AUTH.LOGOUT, payload)
-      
+
       return response
     } finally {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('accessToken')
         localStorage.removeItem('refreshToken')
         localStorage.removeItem('user')
+        // Also clear the auth cookie used by middleware
+        document.cookie = 'accessToken=; path=/; max-age=0; SameSite=Lax'
       }
     }
   },
@@ -117,8 +123,8 @@ export const authService = {
    * POST /api/auth/token/refresh/
    */
   refreshToken: async (): Promise<RefreshTokenResponse> => {
-    const refreshToken = typeof window !== 'undefined' 
-      ? localStorage.getItem('refreshToken') 
+    const refreshToken = typeof window !== 'undefined'
+      ? localStorage.getItem('refreshToken')
       : null
 
     if (!refreshToken) {
@@ -135,6 +141,8 @@ export const authService = {
           if (response.refresh) {
             localStorage.setItem('refreshToken', response.refresh)
           }
+          // Update cookie as well
+          document.cookie = `accessToken=${response.access}; path=/; max-age=${7 * 24 * 3600}; SameSite=Lax`
         }
       } catch (error) {
         console.error('Failed to store refreshed token:', error)

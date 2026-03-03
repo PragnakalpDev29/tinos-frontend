@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import { handleApiError, getFieldErrors } from '@/lib/api/error-handler'
+import { authService } from '@/lib/services/auth.service'
 import toast from 'react-hot-toast'
 
 export function TwoStepLogin() {
@@ -26,6 +27,18 @@ export function TwoStepLogin() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
     try {
+      // 1. Call custom auth service to set localStorage and accessToken cookie 
+      // This is crucial for our Proxy/Middleware to allow access to dashboard routes.
+      const authResponse = await authService.login({
+        email: data.email,
+        password: data.password,
+      })
+
+      if (!authResponse?.tokens?.access) {
+        throw new Error('No access token received')
+      }
+
+      // 2. Call NextAuth signIn to maintain compatibility with components using useSession()
       const response = await signIn('credentials', {
         email: data.email,
         password: data.password,
@@ -40,18 +53,21 @@ export function TwoStepLogin() {
         })
       } else if (response?.ok) {
         toast.success('Login successful!')
-        router.push('/dashboard')
-        router.refresh()
+
+        // Use window.location.href instead of router.push to ensure 
+        // a full page load so the Proxy/Middleware gets the new cookie correctly.
+        window.location.href = '/dashboard'
       }
     } catch (error: unknown) {
       const apiError = handleApiError(error, false)
+      console.error('Login Failure:', apiError)
 
       if (apiError.details) {
         const fieldErrors = getFieldErrors(apiError)
-        Object.entries(fieldErrors).forEach(([field, message]) => {
+        Object.entries(fieldErrors || {}).forEach(([field, message]) => {
           setError(field as keyof LoginFormData, {
             type: 'manual',
-            message,
+            message: message as string,
           })
         })
       } else {
@@ -134,11 +150,11 @@ export function TwoStepLogin() {
 
       <p className="text-center text-slate-400 text-xs mt-8">
         By signing in, you agree to our{' '}
-        <Link className="underline" href="#">
+        <Link className="underline" href="/terms">
           Terms
         </Link>{' '}
         and{' '}
-        <Link className="underline" href="#">
+        <Link className="underline" href="/privacy">
           Privacy Policy
         </Link>
         .

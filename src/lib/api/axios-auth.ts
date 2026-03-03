@@ -48,8 +48,10 @@ const useAxiosAuth = (): UseAxiosAuthReturn => {
 
     const requestIntercept = axiosAuth.interceptors.request.use(
       (config) => {
-        if (session?.user?.access) {
-          config.headers['Authorization'] = `Bearer ${session.user.access}`
+        // Support both flattened session and session.user
+        const token = (session as any)?.access || session?.user?.access
+        if (token) {
+          config.headers['Authorization'] = `Bearer ${token}`
         }
         return config
       },
@@ -77,10 +79,21 @@ const useAxiosAuth = (): UseAxiosAuthReturn => {
           isRefreshingLocal = true
 
           try {
+            const refreshToken = (session as any)?.refresh || session?.user?.refresh
+
+            if (!refreshToken) {
+              throw new Error('No refresh token available')
+            }
+
             const response = await axios.post(
               `${BASE_URL}/api/auth/token/refresh/`,
-              { refresh: session?.user?.refresh },
-              { headers: { 'Content-Type': 'application/json' } }
+              { refresh: refreshToken },
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                  'ngrok-skip-browser-warning': '69420'
+                }
+              }
             )
 
             const newToken = response.data.access
@@ -88,11 +101,13 @@ const useAxiosAuth = (): UseAxiosAuthReturn => {
             if (newToken) {
               await update({
                 ...session,
+                // Update both locations just in case
+                access: newToken,
                 user: {
                   ...session?.user,
                   access: newToken,
                 },
-              })
+              } as any)
 
               prevRequest.headers['Authorization'] = `Bearer ${newToken}`
 

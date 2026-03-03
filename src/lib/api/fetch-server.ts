@@ -4,7 +4,7 @@
  * Features: Built-in caching, ISR, On-demand revalidation
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API || 'https://patriotic-reena-choregraphically.ngrok-free.dev'
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API || 'http://localhost:8001'
 const API_TOKEN = process.env.API_TOKEN
 
 export interface FetchOptions extends RequestInit {
@@ -24,10 +24,11 @@ export async function fetchServer<T>(
   options: FetchOptions = {}
 ): Promise<T> {
   const url = endpoint.startsWith('http') ? endpoint : `${BASE_URL}${endpoint}`
-  
+
   const defaultHeaders: HeadersInit = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    'ngrok-skip-browser-warning': '69420',
   }
 
   if (API_TOKEN) {
@@ -48,8 +49,8 @@ export async function fetchServer<T>(
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}))
       throw new Error(
-        errorData.detail || 
-        errorData.error || 
+        errorData.detail ||
+        errorData.error ||
         `HTTP ${res.status}: ${res.statusText}`
       )
     }

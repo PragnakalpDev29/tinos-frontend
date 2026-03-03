@@ -10,15 +10,19 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResp
 
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API || '/'
 
+const isNgrok = BASE_URL.includes('ngrok')
+
 export const axiosClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
+    ...(isNgrok ? { 'ngrok-skip-browser-warning': '69420' } : {}),
   },
-  withCredentials: false,
+  withCredentials: true,
 })
+
 
 // Request interceptor - add auth token and CSRF token
 axiosClient.interceptors.request.use(
@@ -37,6 +41,9 @@ axiosClient.interceptors.request.use(
       const token = localStorage.getItem('accessToken')
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Using Token:', token.substring(0, 10) + '...')
+        }
       }
 
       const csrfToken = document.cookie
@@ -91,10 +98,14 @@ axiosClient.interceptors.response.use(
 
           if (refreshToken) {
             const response = await axios.post(
-              `/proxy/api/auth/token/refresh/`,
+              `${BASE_URL}/api/auth/token/refresh/`,
               { refresh: refreshToken },
               {
-                headers: { 'Content-Type': 'application/json' }
+                withCredentials: true,
+                headers: {
+                  'Content-Type': 'application/json',
+                  'ngrok-skip-browser-warning': '69420'
+                }
               }
             )
 
@@ -102,6 +113,11 @@ axiosClient.interceptors.response.use(
             localStorage.setItem('accessToken', access)
             if (refresh) {
               localStorage.setItem('refreshToken', refresh)
+            }
+
+            // Also update the cookie for the proxy/middleware
+            if (typeof window !== 'undefined') {
+              document.cookie = `accessToken=${access}; path=/; max-age=${7 * 24 * 3600}; SameSite=Lax`
             }
 
             if (originalRequest.headers) {
