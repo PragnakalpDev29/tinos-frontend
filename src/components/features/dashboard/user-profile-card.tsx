@@ -41,11 +41,13 @@ export function UserProfileCard({ user, isLoading }: UserProfileCardProps) {
 
   const getInitials = (name: string) => {
     return name
+      .trim()
       .split(' ')
+      .filter(n => n.length > 0)
       .map(n => n[0])
       .join('')
       .toUpperCase()
-      .slice(0, 2)
+      .slice(0, 2) || 'U'
   }
 
   return (
