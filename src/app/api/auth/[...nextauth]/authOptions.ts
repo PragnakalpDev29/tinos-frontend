@@ -27,10 +27,10 @@ const authOptions: AuthOptions = {
               headers: { 'Content-Type': 'application/json' },
             }
           )
-          console.log('Login API Response:', {
-            status: response.status,
-            endpoint: `${BASE_URL}/api/auth/login/`,
-          })
+          // console.log('Login API Response:', {
+          //   status: response.status,
+          //   endpoint: `${BASE_URL}/api/auth/login/`,
+          // })
 
           // Django backend returns: { message, user, tokens: { access, refresh } }
           if (response.data?.tokens && response.data?.user) {

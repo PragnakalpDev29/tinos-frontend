@@ -41,11 +41,11 @@ export default function proxy(request: NextRequest) {
 
     // Log the auth status to the server console (visible in dev terminal)
     // Keep it short and useful
-    if (!pathname.startsWith('/_next') && !pathname.includes('.')) {
-        const cookieNames = request.cookies.getAll().map(c => c.name).join(', ')
-        console.log(`[Proxy] ${pathname} - Auth: ${isAuthenticated} (Access: ${!!accessToken}, NextAuth: ${!!nextAuthToken})`)
-        console.log(`[Proxy] Cookies found: [${cookieNames}]`)
-    }
+    // if (!pathname.startsWith('/_next') && !pathname.includes('.')) {
+    //     const cookieNames = request.cookies.getAll().map(c => c.name).join(', ')
+    //     console.log(`[Proxy] ${pathname} - Auth: ${isAuthenticated} (Access: ${!!accessToken}, NextAuth: ${!!nextAuthToken})`)
+    //     console.log(`[Proxy] Cookies found: [${cookieNames}]`)
+    // }
 
     // TEMPORARILY DISABLED SECURITY
     return NextResponse.next()

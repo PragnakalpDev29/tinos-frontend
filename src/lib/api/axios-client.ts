@@ -27,23 +27,23 @@ export const axiosClient: AxiosInstance = axios.create({
 // Request interceptor - add auth token and CSRF token
 axiosClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('API Request:', {
-        method: config.method?.toUpperCase(),
-        url: config.url,
-        baseURL: config.baseURL,
-        data: config.data,
-        withCredentials: config.withCredentials,
-      })
-    }
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.log('API Request:', {
+    //     method: config.method?.toUpperCase(),
+    //     url: config.url,
+    //     baseURL: config.baseURL,
+    //     data: config.data,
+    //     withCredentials: config.withCredentials,
+    //   })
+    // }
 
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('accessToken')
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Using Token:', token.substring(0, 10) + '...')
-        }
+        // if (process.env.NODE_ENV === 'development') {
+        //   console.log('Using Token:', token.substring(0, 10) + '...')
+        // }
       }
 
       const csrfToken = document.cookie
@@ -67,13 +67,13 @@ axiosClient.interceptors.request.use(
 // Response interceptor - handle errors globally and auto token refresh
 axiosClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('API Response:', {
-        status: response.status,
-        url: response.config.url,
-        data: response.data,
-      })
-    }
+    // if (process.env.NODE_ENV === 'development') {
+    //   console.log('API Response:', {
+    //     status: response.status,
+    //     url: response.config.url,
+    //     data: response.data,
+    //   })
+    // }
     return response
   },
   async (error: AxiosError) => {

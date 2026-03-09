@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { jobService } from '@/lib/services/job.service'
 import toast from 'react-hot-toast'
-import { Info, Cpu, FlaskConical, FolderOpen, Database, Check, ChevronRight, AlertTriangle, Clock } from 'lucide-react'
+import { Info, Cpu, FlaskConical, FolderOpen, Database, Check, ChevronRight, AlertTriangle, Clock, Upload, X } from 'lucide-react'
 
 const STAGE1_PATHS = [
     { label: 'DEG Target (DMSO)', value: 's3://epicode-neoantigen/pragnakalp_preprocessing_input/deg/rna/gsc_dmso/' },
@@ -48,10 +48,113 @@ export function UnifiedPipelineForm() {
     })
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [queueFull, setQueueFull] = useState<{ message: string; running: number; queued: number } | null>(null)
+    const [files, setFiles] = useState<FileList | null>(null)
+    const [uploading, setUploading] = useState(false)
+    const [uploadProgress, setUploadProgress] = useState(0)
+    const [showUploadSection, setShowUploadSection] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
         setFormData(prev => ({ ...prev, [name]: value }))
+    }
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const selectedFiles = Array.from(e.target.files)
+            // console.log('Files selected:', selectedFiles.length, selectedFiles.map(f => f.name)) // DEBUG: Uncomment for testing
+            
+            // Check file type validation only
+            const invalidFiles = selectedFiles.filter(file => !file.name.toLowerCase().endsWith('.bam'))
+            
+            if (invalidFiles.length > 0) {
+                toast.error(
+                    `Invalid file type(s): ${invalidFiles.map(f => f.name).join(', ')}. Only .bam files are allowed.`,
+                    { duration: 5000 }
+                )
+                e.target.value = ''
+                return
+            }
+            
+            // TESTING: To accept any file type, comment out the validation above and change accept=".bam" to accept="*"
+            
+            setFiles(e.target.files)
+        }
+    }
+
+    const handleFileUpload = async () => {
+        // console.log('Upload button clicked. Files:', files ? files.length : 'null', files ? Array.from(files).map(f => f.name) : 'none') // DEBUG: Uncomment for testing
+        
+        if (!files || files.length === 0) {
+            toast.error('Please select at least 2 BAM files to upload')
+            return
+        }
+
+        if (files.length < 2) {
+            toast.error('Minimum 2 BAM files required for upload')
+            return
+        }
+
+        const s3UploadPath = process.env.NEXT_PUBLIC_S3_RNA_BAM_UPLOAD_PATH || 'pragnakalp_rna_bam_uploads'
+
+        setUploading(true)
+        setUploadProgress(0)
+
+        const formDataUpload = new FormData()
+        Array.from(files).forEach((file) => {
+            formDataUpload.append('files', file)
+        })
+        formDataUpload.append('s3_bucket_url', s3UploadPath)
+
+        try {
+            const xhr = new XMLHttpRequest()
+
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable) {
+                    const percentComplete = (e.loaded / e.total) * 100
+                    setUploadProgress(Math.round(percentComplete))
+                }
+            })
+
+            xhr.addEventListener('load', () => {
+                if (xhr.status === 200) {
+                    const result = JSON.parse(xhr.responseText)
+                    if (result.success && result.folder_name) {
+                        const s3Path = `s3://epicode-neoantigen/${result.folder_name}`
+                        setFormData(prev => ({ ...prev, s3_rna_bam: s3Path }))
+                        toast.success(`Files uploaded! RNA BAM path auto-filled.`)
+                        setShowUploadSection(false)
+                        setFiles(null)
+                    } else {
+                        toast.error('Upload succeeded but no folder path returned')
+                    }
+                } else {
+                    const error = JSON.parse(xhr.responseText)
+                    toast.error(error.message || 'Upload failed')
+                }
+                setUploading(false)
+            })
+
+            xhr.addEventListener('error', () => {
+                toast.error('Network error occurred during upload')
+                setUploading(false)
+            })
+
+            xhr.open('POST', '/api/s3-upload')
+            xhr.send(formDataUpload)
+        } catch (error) {
+            console.error('Upload error:', error)
+            toast.error('Failed to upload files')
+            setUploading(false)
+        }
+    }
+
+    const formatFileSize = (bytes: number) => {
+        if (bytes === 0) return '0 Bytes'
+        const k = 1024
+        const sizes = ['Bytes', 'KB', 'MB', 'GB']
+        const i = Math.floor(Math.log(bytes) / Math.log(k))
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i]
     }
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -166,19 +269,184 @@ export function UnifiedPipelineForm() {
                             <label htmlFor="s3_rna_bam" className="block text-sm font-semibold text-slate-700 mb-2">
                                 S3 RNA BAM Path <span className="text-red-500">*</span>
                             </label>
-                            <input
-                                type="text"
-                                id="s3_rna_bam"
-                                name="s3_rna_bam"
-                                value={formData.s3_rna_bam}
-                                onChange={handleInputChange}
-                                required
-                                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all placeholder:text-slate-400"
-                                placeholder="s3://bucket/path/to/rna-bams/"
-                            />
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    id="s3_rna_bam"
+                                    name="s3_rna_bam"
+                                    value={formData.s3_rna_bam}
+                                    onChange={handleInputChange}
+                                    required
+                                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all placeholder:text-slate-400"
+                                    placeholder="s3://bucket/path/to/rna-bams/"
+                                />
+                            </div>
                             <p className="mt-1.5 text-xs text-slate-500 flex items-center gap-1">
                                 <Info className="w-3 h-3 shrink-0" /> S3 prefix containing all the RNA BAM files to process.
                             </p>
+                        </div>
+                    </div>
+
+                    {/* OR Divider */}
+                    <div className="relative my-8">
+                        <div className="absolute inset-0 flex items-center" aria-hidden="true">
+                            <div className="w-full border-t-2 border-teal-200"></div>
+                        </div>
+                        <div className="relative flex justify-center">
+                            <span className="bg-white px-6 py-2 text-sm font-bold text-teal-600 uppercase tracking-wider border-2 border-teal-200 rounded-full shadow-sm">
+                                Or
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* File Upload Section */}
+                    <div className="mt-6">
+                        <div className="bg-gradient-to-br from-teal-50 to-emerald-50 border-2 border-teal-200 rounded-xl p-6 space-y-5">
+                            <div className="flex items-center gap-3">
+                                <div className="h-12 w-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                                    <Upload className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h4 className="text-base font-bold text-slate-900">Upload RNA BAM Files</h4>
+                                    <p className="text-xs text-slate-600">Don't have an S3 path? Upload your files here and we'll auto-fill it for you</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-white rounded-lg p-5 border border-teal-100 shadow-sm">
+                                <label className="block text-sm font-semibold text-slate-700 mb-3">
+                                    Select Multiple Files <span className="text-red-500">(Minimum 2 required)</span>
+                                </label>
+                                <div className="relative">
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        multiple
+                                        accept=".bam"
+                                        onChange={handleFileChange}
+                                        disabled={uploading}
+                                        className="block w-full text-sm text-slate-500
+                                            file:mr-4 file:py-3 file:px-6
+                                            file:rounded-lg file:border-0
+                                            file:text-sm file:font-bold
+                                            file:bg-gradient-to-r file:from-teal-500 file:to-teal-600
+                                            file:text-white file:shadow-md
+                                            hover:file:from-teal-600 hover:file:to-teal-700
+                                            file:transition-all file:cursor-pointer
+                                            disabled:opacity-50 disabled:cursor-not-allowed
+                                            cursor-pointer border-2 border-dashed border-slate-300 rounded-lg p-4
+                                            hover:border-teal-400 transition-colors"
+                                    />
+                                </div>
+                                <p className="mt-2 text-xs text-slate-500 flex items-center gap-1">
+                                    <Info className="w-3 h-3" />
+                                    Only .bam files accepted (minimum 2 files) 
+                                </p>
+                            </div>
+
+                            {uploading && (
+                                <div className="bg-white rounded-lg p-4 border border-teal-100 shadow-sm">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-sm font-semibold text-slate-700">Uploading Files...</span>
+                                        <span className="text-sm font-bold text-teal-600">{uploadProgress}%</span>
+                                    </div>
+                                    <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                                        <div
+                                            className="bg-gradient-to-r from-teal-500 to-teal-600 h-3 rounded-full transition-all duration-300 shadow-sm"
+                                            style={{ width: `${uploadProgress}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Selected Files Display */}
+                            {files && files.length > 0 && (
+                                <div className="mt-5">
+                                    <div className="bg-white rounded-lg border border-teal-200 shadow-sm overflow-hidden">
+                                        <div className="bg-teal-50 px-4 py-3 border-b border-teal-200">
+                                            <h5 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                                                <Database className="w-4 h-4 text-teal-600" />
+                                                Selected {files.length} file(s):
+                                            </h5>
+                                        </div>
+                                        <div className="p-4">
+                                            <div className="space-y-2">
+                                                {Array.from(files).map((file, index) => (
+                                                    <div key={index} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg border border-slate-200 hover:border-teal-300 transition-colors group">
+                                                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                                                            <div className="flex-shrink-0">
+                                                                <div className="h-8 w-8 bg-teal-100 rounded-lg flex items-center justify-center">
+                                                                    <Database className="w-4 h-4 text-teal-600" />
+                                                                </div>
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-sm font-semibold text-slate-900 truncate" title={file.name}>
+                                                                    {file.name}
+                                                                </p>
+                                                                <p className="text-xs text-slate-500 mt-0.5">
+                                                                    {formatFileSize(file.size)}
+                                                                </p>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                const dt = new DataTransfer()
+                                                                Array.from(files).forEach((f, i) => {
+                                                                    if (i !== index) dt.items.add(f)
+                                                                })
+                                                                const newFiles = dt.files.length > 0 ? dt.files : null
+                                                                setFiles(newFiles)
+                                                                
+                                                                // Reset file input to sync with state
+                                                                if (fileInputRef.current) {
+                                                                    if (newFiles && newFiles.length > 0) {
+                                                                        fileInputRef.current.files = newFiles
+                                                                    } else {
+                                                                        fileInputRef.current.value = ''
+                                                                    }
+                                                                }
+                                                            }}
+                                                            className="flex-shrink-0 p-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-colors opacity-0 group-hover:opacity-100"
+                                                            title="Remove file"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="mt-4 pt-4 border-t border-teal-200">
+                                                <p className="text-sm text-slate-600">
+                                                    <span className="font-semibold">Total:</span> {formatFileSize(Array.from(files).reduce((acc, f) => acc + f.size, 0))}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex justify-end mt-5">
+                                <button
+                                    type="button"
+                                    onClick={handleFileUpload}
+                                    disabled={uploading || !files || files.length < 2}
+                                    className="px-8 py-3 bg-gradient-to-r from-teal-600 to-teal-500 text-white rounded-lg font-bold text-sm
+                                        hover:from-teal-700 hover:to-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2
+                                        disabled:opacity-50 disabled:cursor-not-allowed disabled:from-slate-400 disabled:to-slate-500
+                                        transition-all duration-200 flex items-center gap-2 shadow-lg hover:shadow-xl"
+                                >
+                                    {uploading ? (
+                                        <>
+                                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                            Uploading to S3...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Upload className="w-4 h-4" />
+                                            Upload {files && files.length > 0 ? `${files.length} File${files.length > 1 ? 's' : ''}` : 'Files'} to S3
+                                        </>
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </div>
 

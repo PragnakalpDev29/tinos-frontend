@@ -131,7 +131,7 @@ export function PreprocessingJobForm() {
         { duration: 5000 }
       )
 
-      console.log('Job submission response:', response)
+      // console.log('Job submission response:', response)
       setS3Validation({ status: 'idle' })
       setFormData({
         jobName: '',
