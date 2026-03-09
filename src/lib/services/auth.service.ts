@@ -23,7 +23,7 @@ export const authService = {
    */
   register: async (data: RegisterDto): Promise<RegisterResponse> => {
     const response = await post<RegisterResponse>(API_ENDPOINTS.AUTH.REGISTER, data)
-    console.log("Register response--->", response)
+    // console.log("Register response--->", response)
     if (response.tokens?.access) {
       try {
         if (typeof window !== 'undefined') {

@@ -26,12 +26,12 @@ export function RegisterForm() {
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true)
-    console.log('Registration form submitted with data:', data)
+    // console.log('Registration form submitted with data:', data)
     
     try {
-      console.log('Calling authService.register...')
+      // console.log('Calling authService.register...')
       const response = await authService.register(data)
-      console.log('Registration response:', response)
+      // console.log('Registration response:', response)
       
       toast.success('Account created successfully! Redirecting to dashboard...')
       
