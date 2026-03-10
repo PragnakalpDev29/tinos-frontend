@@ -189,12 +189,28 @@ export function PipelineConfigContent() {
 
                                                         <td className="px-4 py-3 align-top">
                                                             {isEdit ? (
-                                                                <input
-                                                                    autoFocus
-                                                                    value={edits[row.key] ?? row.value}
-                                                                    onChange={e => handleChange(row.key, e.target.value)}
-                                                                    className="w-full px-3 py-1.5 border-2 border-teal-400 rounded-lg font-mono text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white"
-                                                                />
+                                                                <div className="space-y-1">
+                                                                    <input
+                                                                        autoFocus
+                                                                        value={edits[row.key] ?? row.value}
+                                                                        onChange={e => handleChange(row.key, e.target.value)}
+                                                                        className={`w-full px-3 py-1.5 border-2 rounded-lg font-mono text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white ${(row.key === 'neo_num_cores' && parseInt(edits[row.key] ?? row.value) > 300) ||
+                                                                                (row.key !== 'neo_num_cores' && (edits[row.key] ?? row.value).trim() && !(edits[row.key] ?? row.value).trim().toLowerCase().startsWith('s3://'))
+                                                                                ? 'border-red-400 focus:ring-red-500'
+                                                                                : 'border-teal-400'
+                                                                            }`}
+                                                                    />
+                                                                    {row.key === 'neo_num_cores' && parseInt(edits[row.key] ?? row.value) > 300 && (
+                                                                        <p className="text-[10px] text-red-600 font-bold animate-pulse">
+                                                                            ⚠ Maximum limit is 300 cores.
+                                                                        </p>
+                                                                    )}
+                                                                    {row.key !== 'neo_num_cores' && (edits[row.key] ?? row.value).trim() && !(edits[row.key] ?? row.value).trim().toLowerCase().startsWith('s3://') && (
+                                                                        <p className="text-[10px] text-red-600 font-bold animate-pulse">
+                                                                            ⚠ Invalid S3 link. Must start with s3://
+                                                                        </p>
+                                                                    )}
+                                                                </div>
                                                             ) : (
                                                                 <span className="font-mono text-xs text-slate-600 break-all">{row.value}</span>
                                                             )}

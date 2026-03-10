@@ -5,7 +5,7 @@ import { authService } from '@/lib/services/auth.service'
 import type { User } from '@/types/auth'
 import { DashboardContent } from '@/components/features/dashboard/dashboard-content'
 
-export default function NeoantigenJobsDashboard() {
+export default function PreprocessingJobsPage() {
     const [user, setUser] = useState<User | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 
@@ -29,5 +29,5 @@ export default function NeoantigenJobsDashboard() {
         fetchUserData()
     }, [])
 
-    return <DashboardContent user={user} isLoading={isLoading} pipelineType="Neoantigen" />
+    return <DashboardContent user={user} isLoading={isLoading} pipelineType="Preprocessing" />
 }

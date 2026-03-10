@@ -46,7 +46,7 @@ export const jobService = {
    */
   getPreprocessingJobs: async (): Promise<any[]> => {
     const { get } = await import('@/lib/api/axios-client')
-    return get<any[]>(`${API_ENDPOINTS.JOBS.SUBMIT_PREPROCESSING}?expand_children=true`)
+    return get<any[]>(API_ENDPOINTS.JOBS.SUBMIT_PREPROCESSING)
   },
 
   /**
@@ -77,10 +77,35 @@ export const jobService = {
   },
 
   /**
+   * Get the linked neoantigen job for a preprocessing job (server-side matching)
+   * GET /api/submit-preprocessing/{id}/neoantigen/
+   */
+  getLinkedNeoantigenJob: async (preprocessingJobId: number | string): Promise<any | null> => {
+    const { get } = await import('@/lib/api/axios-client')
+    try {
+      const result = await get<any>(`${API_ENDPOINTS.JOBS.SUBMIT_PREPROCESSING}${preprocessingJobId}/neoantigen/`)
+      return result || null
+    } catch {
+      return null
+    }
+  },
+
+  /**
    * Submit a neoantigen job to AWS Batch
    * POST /api/submit-neoantigen/
    */
   submitNeoantigenJob: async (data: any): Promise<any> => {
     return post<any>(API_ENDPOINTS.JOBS.SUBMIT_NEOANTIGEN, data)
+  },
+
+  /**
+   * Sync all non-terminal jobs for the current user with AWS Batch
+   * POST /api/sync-active-jobs/
+   */
+  syncActiveJobs: async (): Promise<{ message: string; synced_count: number }> => {
+    return post<{ message: string; synced_count: number }>(
+      '/api/sync-active-jobs/',
+      {}
+    )
   },
 }

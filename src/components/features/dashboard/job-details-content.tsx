@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Copy, Check, CheckCircle, XCircle, Loader2, GitBranch, Clock, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, Copy, Check, CheckCircle, XCircle, Loader2, GitBranch, Clock, AlertTriangle, FlaskConical, ExternalLink } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useJobStatusWebSocket } from '@/hooks/use-job-status-websocket'
@@ -85,7 +85,10 @@ export function JobDetailsContent({ jobId, jobType }: JobDetailsContentProps) {
   const [job, setJob] = useState<JobData | null>(null)
   const [children, setChildren] = useState<ChildJob[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [linkedNeoJob, setLinkedNeoJob] = useState<any | null>(null)
+  const [isLinkedNeoJobLoading, setIsLinkedNeoJobLoading] = useState(false)
   const childPollRef = useRef<NodeJS.Timeout | null>(null)
+  const neoPollRef = useRef<NodeJS.Timeout | null>(null)
 
   const fetchJob = useCallback(async () => {
     try {
@@ -117,6 +120,26 @@ export function JobDetailsContent({ jobId, jobType }: JobDetailsContentProps) {
     fetchJob()
   }, [fetchJob])
 
+  // Fetch linked neoantigen job for preprocessing view — uses dedicated backend endpoint
+  const fetchLinkedNeoJob = useCallback(async (isInitial = false) => {
+    if (isInitial) setIsLinkedNeoJobLoading(true)
+    try {
+      const neo = await jobService.getLinkedNeoantigenJob(jobId)
+      setLinkedNeoJob(neo)
+    } catch {
+      // silently ignore
+    } finally {
+      if (isInitial) setIsLinkedNeoJobLoading(false)
+    }
+  }, [jobId])
+
+  useEffect(() => {
+    if (jobType !== 'preprocessing') return
+    fetchLinkedNeoJob(true)
+    neoPollRef.current = setInterval(() => fetchLinkedNeoJob(false), 15_000)
+    return () => { if (neoPollRef.current) clearInterval(neoPollRef.current) }
+  }, [fetchLinkedNeoJob, jobType])
+
   useEffect(() => {
     if (jobType !== 'preprocessing') return
     fetchChildren()
@@ -128,6 +151,13 @@ export function JobDetailsContent({ jobId, jobType }: JobDetailsContentProps) {
     if (job && job.job_id === update.job_id) {
       setJob(prevJob => prevJob ? { ...prevJob, status: update.status, updated_at: update.updated_at } : null)
     }
+    // Also update linked neo job status if its job_id matches
+    setLinkedNeoJob((prev: any) => {
+      if (prev && prev.job_id === update.job_id) {
+        return { ...prev, status: update.status, updated_at: update.updated_at }
+      }
+      return prev
+    })
     setChildren(prev => prev.map(c =>
       c.job_id === update.job_id ? { ...c, status: update.status, updated_at: update.updated_at } : c
     ))
@@ -208,6 +238,7 @@ export function JobDetailsContent({ jobId, jobType }: JobDetailsContentProps) {
         <p className="text-slate-600 mt-2">Job ID: {job.job_id}</p>
       </div>
 
+
       {job.status === 'FAILED' && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
           <div className="flex items-start gap-3">
@@ -271,7 +302,7 @@ export function JobDetailsContent({ jobId, jobType }: JobDetailsContentProps) {
         </div>
       )}
 
-      {job.status !== 'FAILED' && job.status !== 'SUCCEEDED' && job.status !== 'PENDING_PREPROCESSING' && (
+      {job.status !== 'FAILED' && job.status !== 'SUCCEEDED' && (
         <Card variant="elevated" className="bg-slate-50">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -280,38 +311,53 @@ export function JobDetailsContent({ jobId, jobType }: JobDetailsContentProps) {
                   <StatusIcon status={job.status} />
                   {currentStatus.label}
                 </span>
-                <span className="text-sm font-medium text-slate-600">
-                  {currentStatus.progress}% Complete
-                </span>
-              </div>
-            </div>
-
-            <div className="relative w-full h-3 bg-slate-200 rounded-full overflow-hidden mb-4">
-              <div
-                className={`absolute top-0 left-0 h-full ${currentStatus.color} transition-all duration-500 ease-out rounded-full`}
-                style={{ width: `${currentStatus.progress}%` }}
-              >
-                {job.status === 'RUNNING' && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                {job.status !== 'PENDING_PREPROCESSING' && (
+                  <span className="text-sm font-medium text-slate-600">
+                    {currentStatus.progress}% Complete
+                  </span>
                 )}
               </div>
             </div>
 
-            <div className="flex justify-between text-xs">
-              {['SUBMITTED', 'PENDING', 'RUNNABLE', 'STARTING', 'RUNNING', 'SUCCEEDED'].map((s) => {
-                const stepConfig = STATUS_CONFIG[s]
-                const isActive = currentStatus.progress >= stepConfig.progress
-                const isCurrent = job.status === s
-                return (
-                  <div key={s} className="flex flex-col items-center gap-1">
-                    <div className={`w-2 h-2 rounded-full transition-colors ${isActive ? stepConfig.color : 'bg-slate-300'} ${isCurrent ? 'ring-2 ring-offset-2 ring-current' : ''}`}></div>
-                    <span className={`text-[10px] font-medium ${isActive ? 'text-slate-700' : 'text-slate-400'}`}>
-                      {stepConfig.label}
-                    </span>
+            {job.status === 'PENDING_PREPROCESSING' ? (
+              <>
+                <div className="relative w-full h-3 bg-slate-200 rounded-full overflow-hidden mb-4">
+                  <div className="absolute inset-0 bg-gradient-to-r from-indigo-200 via-indigo-400 to-indigo-200 animate-pulse rounded-full" />
+                </div>
+                <p className="text-xs text-indigo-600 font-medium">
+                  ⏳ Waiting for Stage 1 (Preprocessing) to complete before this job can start.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="relative w-full h-3 bg-slate-200 rounded-full overflow-hidden mb-4">
+                  <div
+                    className={`absolute top-0 left-0 h-full ${currentStatus.color} transition-all duration-500 ease-out rounded-full`}
+                    style={{ width: `${currentStatus.progress}%` }}
+                  >
+                    {job.status === 'RUNNING' && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer"></div>
+                    )}
                   </div>
-                )
-              })}
-            </div>
+                </div>
+
+                <div className="flex justify-between text-xs">
+                  {['SUBMITTED', 'PENDING', 'RUNNABLE', 'STARTING', 'RUNNING', 'SUCCEEDED'].map((s) => {
+                    const stepConfig = STATUS_CONFIG[s]
+                    const isActive = currentStatus.progress >= stepConfig.progress
+                    const isCurrent = job.status === s
+                    return (
+                      <div key={s} className="flex flex-col items-center gap-1">
+                        <div className={`w-2 h-2 rounded-full transition-colors ${isActive ? stepConfig.color : 'bg-slate-300'} ${isCurrent ? 'ring-2 ring-offset-2 ring-current' : ''}`}></div>
+                        <span className={`text-[10px] font-medium ${isActive ? 'text-slate-700' : 'text-slate-400'}`}>
+                          {stepConfig.label}
+                        </span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       )}
@@ -387,6 +433,117 @@ export function JobDetailsContent({ jobId, jobType }: JobDetailsContentProps) {
                 )
               })}
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Linked Neoantigen Job Section (preprocessing view only) ── */}
+      {jobType === 'preprocessing' && (
+        <Card variant="elevated" className="border-l-4 border-l-violet-400">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <FlaskConical className="w-5 h-5 text-violet-600" />
+              Linked Neoantigen Job (Stage 2)
+              {linkedNeoJob && (
+                <Link
+                  href={`/dashboard/jobs/${linkedNeoJob.id}?type=neoantigen`}
+                  className="ml-auto flex items-center gap-1.5 text-xs font-semibold text-violet-600 hover:text-violet-800 px-3 py-1.5 bg-violet-50 rounded-lg border border-violet-200 hover:bg-violet-100 transition-colors"
+                >
+                  View Full Details
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLinkedNeoJobLoading ? (
+              <div className="flex items-center gap-3 text-slate-500 py-4">
+                <Loader2 className="w-5 h-5 animate-spin flex-shrink-0" />
+                <p className="text-sm font-medium">Looking for linked neoantigen job…</p>
+              </div>
+            ) : !linkedNeoJob ? (
+              <div className="flex items-center gap-3 text-slate-400 py-4 border-2 border-dashed border-slate-100 rounded-lg justify-center">
+                <FlaskConical className="w-5 h-5 opacity-20" />
+                <p className="text-sm">No linked neoantigen job found for this run.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Status row */}
+                <div className="flex flex-wrap items-center gap-3">
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 mb-1">Run Name</p>
+                    <span className="font-mono text-sm text-slate-800 bg-slate-100 px-2 py-1 rounded">
+                      {linkedNeoJob.run_name}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-slate-500 mb-1">Status</p>
+                    {(() => {
+                      const cfg = STATUS_CONFIG[linkedNeoJob.status] || STATUS_CONFIG.SUBMITTED
+                      return (
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-semibold border ${cfg.bgColor} ${cfg.textColor} ${cfg.borderColor}`}>
+                          <StatusIcon status={linkedNeoJob.status} />
+                          {cfg.label}
+                        </span>
+                      )
+                    })()}
+                  </div>
+                  {linkedNeoJob.cores && (
+                    <div>
+                      <p className="text-xs font-medium text-slate-500 mb-1">Compute</p>
+                      <span className="text-sm font-medium text-slate-700">
+                        {linkedNeoJob.cores} vCPUs · {linkedNeoJob.instance_type || 'm6i.32xlarge'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Progress bar */}
+                {(() => {
+                  const cfg = STATUS_CONFIG[linkedNeoJob.status] || STATUS_CONFIG.SUBMITTED
+                  return (
+                    <div>
+                      <div className="flex justify-between text-xs text-slate-500 mb-1">
+                        <span>Pipeline Progress</span>
+                        <span>{cfg.progress}%</span>
+                      </div>
+                      <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                        <div
+                          className={`h-full ${cfg.color} transition-all duration-500 rounded-full`}
+                          style={{ width: `${cfg.progress}%` }}
+                        />
+                      </div>
+                    </div>
+                  )
+                })()}
+
+                {/* Key S3 paths */}
+                {(linkedNeoJob.s3_output || linkedNeoJob.s3_logs) && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                    {linkedNeoJob.s3_output && (
+                      <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Output Directory</p>
+                        <code className="text-xs text-slate-600 font-mono break-all">{linkedNeoJob.s3_output}</code>
+                      </div>
+                    )}
+                    {linkedNeoJob.s3_logs && (
+                      <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                        <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Logs Directory</p>
+                        <code className="text-xs text-slate-600 font-mono break-all">{linkedNeoJob.s3_logs}</code>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Failure reason */}
+                {linkedNeoJob.status === 'FAILED' && linkedNeoJob.failure_reason && (
+                  <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded-lg">
+                    <p className="text-xs font-semibold text-red-900 mb-1">Neoantigen Job Failed</p>
+                    <p className="text-xs font-mono text-red-800 break-words">{linkedNeoJob.failure_reason}</p>
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

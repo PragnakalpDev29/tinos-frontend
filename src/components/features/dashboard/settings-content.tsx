@@ -1,15 +1,8 @@
 'use client'
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
-import { useState } from 'react'
 
 export function SettingsContent() {
-  const [notifications, setNotifications] = useState({
-    email: true,
-    sms: false,
-    push: true,
-  })
-
   return (
     <div className="space-y-8">
       <div>
@@ -18,70 +11,6 @@ export function SettingsContent() {
       </div>
 
       <div className="space-y-6">
-        <Card variant="elevated">
-          <CardHeader>
-            <CardTitle>Notification Preferences</CardTitle>
-            <CardDescription>Choose how you want to receive notifications</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
-                <div>
-                  <h4 className="font-semibold text-slate-900">Email Notifications</h4>
-                  <p className="text-sm text-slate-600">Receive updates via email</p>
-                </div>
-                <button
-                  onClick={() => setNotifications({ ...notifications, email: !notifications.email })}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    notifications.email ? 'bg-teal-600' : 'bg-slate-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      notifications.email ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-              <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
-                <div>
-                  <h4 className="font-semibold text-slate-900">SMS Notifications</h4>
-                  <p className="text-sm text-slate-600">Receive updates via text message</p>
-                </div>
-                <button
-                  onClick={() => setNotifications({ ...notifications, sms: !notifications.sms })}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    notifications.sms ? 'bg-teal-600' : 'bg-slate-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      notifications.sms ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-              <div className="flex items-center justify-between p-4 border border-slate-200 rounded-lg">
-                <div>
-                  <h4 className="font-semibold text-slate-900">Push Notifications</h4>
-                  <p className="text-sm text-slate-600">Receive push notifications in browser</p>
-                </div>
-                <button
-                  onClick={() => setNotifications({ ...notifications, push: !notifications.push })}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    notifications.push ? 'bg-teal-600' : 'bg-slate-300'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      notifications.push ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
 
         <Card variant="elevated">
           <CardHeader>

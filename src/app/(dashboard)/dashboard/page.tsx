@@ -36,5 +36,5 @@ export default function DashboardPage() {
     fetchUserData()
   }, [])
 
-  return <DashboardContent user={user} isLoading={isLoading} />
+  return <DashboardContent user={user} isLoading={isLoading} pipelineType="Preprocessing" />
 }

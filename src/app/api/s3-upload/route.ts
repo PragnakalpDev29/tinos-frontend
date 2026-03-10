@@ -23,14 +23,42 @@ function createTimestampFolder(): string {
   const hours = String(now.getHours()).padStart(2, '0')
   const minutes = String(now.getMinutes()).padStart(2, '0')
   const seconds = String(now.getSeconds()).padStart(2, '0')
-  
+
   return `${year}-${month}-${day}_${hours}-${minutes}-${seconds}`
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getServerSession()
+
+    if (!session) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    return NextResponse.json({
+      message: 'S3 upload endpoint available',
+      recommended: 'Use Tus resumable uploads at /api/tus-upload for large files',
+      maxSize: 'Unlimited',
+      supportedFormats: ['.bam'],
+      tusEndpoint: '/api/tus-upload',
+      chunkSize: '4MB',
+    })
+  } catch (error) {
+    console.error('S3 upload info error:', error)
+    return NextResponse.json(
+      { error: 'Failed to get upload info' },
+      { status: 500 }
+    )
+  }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession()
-    
+
     if (!session) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized' },
@@ -40,9 +68,9 @@ export async function POST(request: NextRequest) {
 
     if (!AWS_REGION || !ACCESS_KEY || !SECRET_KEY) {
       return NextResponse.json(
-        { 
-          success: false, 
-          message: 'AWS credentials not configured. Please set AWS_REGION, ACCESS_KEY, and SECRET_KEY environment variables.' 
+        {
+          success: false,
+          message: 'AWS credentials not configured. Please set AWS_REGION, ACCESS_KEY, and SECRET_KEY environment variables.'
         },
         { status: 500 }
       )
@@ -142,14 +170,12 @@ export async function POST(request: NextRequest) {
       failed_files: failedFiles.length > 0 ? failedFiles : undefined,
     })
   } catch (error) {
-    // console.error('S3 upload error:', error)
-    
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-    
+
     return NextResponse.json(
-      { 
-        success: false, 
-        message: `Upload failed: ${errorMessage}` 
+      {
+        success: false,
+        message: `Upload failed: ${errorMessage}`
       },
       { status: 500 }
     )
