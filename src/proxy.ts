@@ -1,70 +1,75 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { getToken } from 'next-auth/jwt'
+import { hasAccess } from './lib/utils/auth-helpers'
 
-/**
- * Proxy (the new name for Middleware in Next.js 16+)
- * protects all dashboard routes using the accessToken cookie.
- */
 
-const PUBLIC_PATHS = [
+const publicEndpoints = ['/login', '/register', '/forgot-password', '/reset-password']
+
+const isRootPath = (pathname: string) => pathname === '/'
+
+export async function proxy(req: NextRequest) {
+  const _token: any = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+  })
+
+  const pathname = req.nextUrl.pathname
+
+  if (isRootPath(pathname)) {
+    if (_token) {
+      return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+    return NextResponse.next()
+  }
+
+  const isPublicEndpoint = publicEndpoints.some(
+    (endpoint) => pathname === endpoint || pathname.startsWith(endpoint)
+  )
+
+  if (isPublicEndpoint) {
+    if (_token) {
+      return NextResponse.redirect(new URL('/dashboard', req.url))
+    }
+    return NextResponse.next()
+  }
+
+  if (!_token) {
+    return NextResponse.redirect(new URL('/login', req.url))
+  }
+
+  if (_token?.user?.role?.name) {
+    if (!hasAccess(_token.user.role.name, pathname)) {
+      const response = NextResponse.rewrite(new URL('/403', req.url), {
+        status: 403,
+      })
+      response.headers.set('x-errorCode', '403')
+      return response
+    }
+  }
+
+  return NextResponse.next()
+}
+
+export default proxy
+
+export const config = {
+  matcher: [
+    '/',
     '/login',
     '/register',
     '/forgot-password',
     '/reset-password',
-]
-
-export default function proxy(request: NextRequest) {
-    const { pathname } = request.nextUrl
-
-    // 1. Always allow static files, Next.js internals, and API routes
-    if (
-        pathname.startsWith('/_next') ||
-        pathname.startsWith('/api') ||
-        pathname.startsWith('/proxy') ||
-        pathname.includes('.')
-    ) {
-        return NextResponse.next()
-    }
-
-    // 2. Check for ANY authentication cookie:
-    // - accessToken (our custom Django JWT cookie)
-    // - next-auth.session-token (NextAuth development)
-    // - __Secure-next-auth.session-token (NextAuth production)
-    const accessToken = request.cookies.get('accessToken')?.value
-    const nextAuthToken = request.cookies.get('next-auth.session-token')?.value ||
-        request.cookies.get('__Secure-next-auth.session-token')?.value
-
-    // As long as ONE of these exists, we consider the user authenticated for the Proxy check
-    const isAuthenticated = !!(accessToken || nextAuthToken)
-
-    const isPublic = PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
-    const isRoot = pathname === '/'
-
-    // 3. If user is already authenticated and tries to access public pages (login, register, etc.)
-    // redirect them to dashboard since they're already logged in
-    if (isAuthenticated && isPublic) {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-
-    // 4. If user is authenticated and on root, redirect to dashboard
-    if (isAuthenticated && isRoot) {
-        return NextResponse.redirect(new URL('/dashboard', request.url))
-    }
-
-    // 5. If user is NOT authenticated and trying to access protected routes
-    // redirect them to login
-    if (!isAuthenticated && !isPublic && !isRoot) {
-        return NextResponse.redirect(new URL('/login', request.url))
-    }
-
-    // 6. If user is NOT authenticated and on root, redirect to login
-    if (!isAuthenticated && isRoot) {
-        return NextResponse.redirect(new URL('/login', request.url))
-    }
-
-    // 7. Allow the request to proceed
-    return NextResponse.next()
-}
-
-export const config = {
-    matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+    '/dashboard',
+    '/dashboard/:path*',
+    '/appointments',
+    '/neoantigen',
+    '/neoantigen-jobs',
+    '/pipeline-config',
+    '/preprocessing',
+    '/preprocessing-jobs',
+    '/profile',
+    '/s3-upload',
+    '/settings',
+  ],
 }

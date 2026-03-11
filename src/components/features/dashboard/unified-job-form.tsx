@@ -22,10 +22,26 @@ export function UnifiedPipelineForm() {
     const [uploadStatuses, setUploadStatuses] = useState<Map<string, { progress: number; status: 'uploading' | 'paused' | 'completed' | 'error' }>>(new Map())
     const [completedUploads, setCompletedUploads] = useState<Map<string, { s3Url: string; folderPath: string }>>(new Map())
     const [uploadErrors, setUploadErrors] = useState<Map<string, string>>(new Map())
+    const [s3PathError, setS3PathError] = useState<string>('')
+
+    const validateS3Path = (path: string): boolean => {
+        if (!path) return true // Empty is valid (will be caught by required)
+        const s3PathRegex = /^s3:\/\/[a-zA-Z0-9.\-_]+(\/[a-zA-Z0-9.\-_\/]*)?$/
+        return s3PathRegex.test(path)
+    }
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
         setFormData(prev => ({ ...prev, [name]: value }))
+        
+        // Validate S3 path for s3_rna_bam field
+        if (name === 's3_rna_bam') {
+            if (value && !validateS3Path(value)) {
+                setS3PathError('Invalid S3 path format. Must start with s3:// followed by bucket name and optional path')
+            } else {
+                setS3PathError('')
+            }
+        }
     }
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -529,13 +545,23 @@ Invalid files: ${invalidFiles.map(f => f.name).join(', ')}`,
                                     value={formData.s3_rna_bam}
                                     onChange={handleInputChange}
                                     required
-                                    className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-all placeholder:text-slate-400"
+                                    pattern="^s3:\/\/[a-zA-Z0-9.\-_]+(\/[a-zA-Z0-9.\-_\/]*)?$"
+                                    className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:border-transparent transition-all placeholder:text-slate-400 ${
+                                        s3PathError ? 'border-red-500 focus:ring-red-500' : 'border-slate-300 focus:ring-teal-500'
+                                    }`}
                                     placeholder="s3://bucket/path/to/rna-bams/"
                                 />
                             </div>
-                            <p className="mt-1.5 text-xs text-slate-500 flex items-center gap-1">
-                                <Info className="w-3 h-3 shrink-0" /> S3 prefix containing all the RNA BAM files to process.
-                            </p>
+                            {s3PathError && (
+                                <p className="mt-1.5 text-xs text-red-600 flex items-center gap-1">
+                                    <AlertTriangle className="w-3 h-3 shrink-0" /> {s3PathError}
+                                </p>
+                            )}
+                            {!s3PathError && (
+                                <p className="mt-1.5 text-xs text-slate-500 flex items-center gap-1">
+                                    <Info className="w-3 h-3 shrink-0" /> S3 prefix containing all the RNA BAM files to process.
+                                </p>
+                            )}
                         </div>
                     </div>
 
@@ -598,7 +624,7 @@ Invalid files: ${invalidFiles.map(f => f.name).join(', ')}`,
                             {uploading && (
                                 <div className="bg-white rounded-lg p-4 border border-teal-100 shadow-sm">
                                     <div className="flex justify-between items-center mb-2">
-                                        <span className="text-sm font-semibold text-slate-700">Uploading Files with Tus...</span>
+                                        <span className="text-sm font-semibold text-slate-700">Uploading Files...</span>
                                         <span className="text-sm font-bold text-teal-600">{uploadProgress}%</span>
                                     </div>
                                     <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
@@ -753,12 +779,12 @@ Invalid files: ${invalidFiles.map(f => f.name).join(', ')}`,
                                     {uploading ? (
                                         <>
                                             <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                            Uploading with Tus...
+                                            Uploading...
                                         </>
                                     ) : (
                                         <>
                                             <Upload className="w-4 h-4" />
-                                            Upload {files && files.length > 0 ? `${files.length} File${files.length > 1 ? 's' : ''}` : 'Files'} with Tus
+                                            Upload {files && files.length > 0 ? `${files.length} File${files.length > 1 ? 's' : ''}` : 'Files'}
                                         </>
                                     )}
                                 </button>
