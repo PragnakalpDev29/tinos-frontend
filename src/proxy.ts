@@ -39,15 +39,29 @@ export default function proxy(request: NextRequest) {
     const isPublic = PUBLIC_PATHS.some(p => pathname === p || pathname.startsWith(p + '/'))
     const isRoot = pathname === '/'
 
-    // Log the auth status to the server console (visible in dev terminal)
-    // Keep it short and useful
-    // if (!pathname.startsWith('/_next') && !pathname.includes('.')) {
-    //     const cookieNames = request.cookies.getAll().map(c => c.name).join(', ')
-    //     console.log(`[Proxy] ${pathname} - Auth: ${isAuthenticated} (Access: ${!!accessToken}, NextAuth: ${!!nextAuthToken})`)
-    //     console.log(`[Proxy] Cookies found: [${cookieNames}]`)
-    // }
+    // 3. If user is already authenticated and tries to access public pages (login, register, etc.)
+    // redirect them to dashboard since they're already logged in
+    if (isAuthenticated && isPublic) {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
 
-    // TEMPORARILY DISABLED SECURITY
+    // 4. If user is authenticated and on root, redirect to dashboard
+    if (isAuthenticated && isRoot) {
+        return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+
+    // 5. If user is NOT authenticated and trying to access protected routes
+    // redirect them to login
+    if (!isAuthenticated && !isPublic && !isRoot) {
+        return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    // 6. If user is NOT authenticated and on root, redirect to login
+    if (!isAuthenticated && isRoot) {
+        return NextResponse.redirect(new URL('/login', request.url))
+    }
+
+    // 7. Allow the request to proceed
     return NextResponse.next()
 }
 
