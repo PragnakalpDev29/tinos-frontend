@@ -17,6 +17,7 @@ export const API_ENDPOINTS = {
     SUBMIT_NEOANTIGEN: '/api/submit-neoantigen/',
     SUBMIT_ARCAS_HLA: '/api/submit-arcas-hla/',
     PIPELINE_CONFIG: '/api/pipeline-config/',
+    PIPELINE_CONFIG_HLA: '/api/pipeline-config/hla/',
     PIPELINE_STATUS: (jobId: string) => `/api/pipeline-status/${jobId}/`,
     SYNC_ACTIVE_JOBS: '/api/sync-active-jobs/',
   },

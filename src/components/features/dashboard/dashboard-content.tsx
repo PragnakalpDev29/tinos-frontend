@@ -177,19 +177,19 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
         </Link>
       ),
     },
-    {
-      key: 'pipeline_type',
-      header: 'Pipeline',
-      sortable: true,
-      render: (item) => (
-        <span className={`px-2 py-1 rounded text-xs font-semibold ${(item as any).pipeline_type === 'Neoantigen'
-          ? 'bg-violet-100 text-violet-700'
-          : 'bg-teal-100 text-teal-700'
-          }`}>
-          {(item as any).pipeline_type || 'Preprocessing'}
-        </span>
-      ),
-    },
+    // {
+    //   key: 'pipeline_type',
+    //   header: 'Pipeline',
+    //   sortable: true,
+    //   render: (item) => (
+    //     <span className={`px-2 py-1 rounded text-xs font-semibold ${(item as any).pipeline_type === 'Neoantigen'
+    //       ? 'bg-violet-100 text-violet-700'
+    //       : 'bg-teal-100 text-teal-700'
+    //       }`}>
+    //       {(item as any).pipeline_type || 'Preprocessing'}
+    //     </span>
+    //   ),
+    // },
     {
       key: 'job_name',
       header: 'Job Name',
@@ -218,19 +218,19 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
         )
       },
     },
-    {
-      key: 'job_type',
-      header: 'Type',
-      sortable: true,
-      render: (item) => (
-        <span className={`px-2 py-1 rounded text-xs font-semibold ${item.job_type === 'SINGLE' ? 'bg-blue-100 text-blue-700' :
-          item.job_type === 'ARRAY' ? 'bg-purple-100 text-purple-700' :
-            'bg-slate-100 text-slate-700'
-          }`}>
-          {item.display_type}
-        </span>
-      ),
-    },
+    // {
+    //   key: 'job_type',
+    //   header: 'Type',
+    //   sortable: true,
+    //   render: (item) => (
+    //     <span className={`px-2 py-1 rounded text-xs font-semibold ${item.job_type === 'SINGLE' ? 'bg-blue-100 text-blue-700' :
+    //       item.job_type === 'ARRAY' ? 'bg-purple-100 text-purple-700' :
+    //         'bg-slate-100 text-slate-700'
+    //       }`}>
+    //       {item.display_type}
+    //     </span>
+    //   ),
+    // },
     {
       key: 'status',
       header: 'Pipeline Status',

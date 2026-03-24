@@ -42,6 +42,13 @@ export function PipelineConfigContent() {
     const [isSaving, setIsSaving] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
 
+    // HLA Config state
+    const [hlaRows, setHlaRows] = useState<ConfigRow[]>([])
+    const [hlaEdits, setHlaEdits] = useState<Record<string, string>>({})
+    const [hlaEditing, setHlaEditing] = useState<Set<string>>(new Set())
+    const [isHlaSaving, setIsHlaSaving] = useState(false)
+    const [isHlaLoading, setIsHlaLoading] = useState(true)
+
     const fetchConfig = useCallback(async () => {
         try {
             setIsLoading(true)
@@ -54,7 +61,23 @@ export function PipelineConfigContent() {
         }
     }, [])
 
-    useEffect(() => { fetchConfig() }, [fetchConfig])
+    const fetchHlaConfig = useCallback(async () => {
+        try {
+            setIsHlaLoading(true)
+            const res = await axiosClient.get<ConfigRow[]>(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA)
+            setHlaRows(res.data)
+        } catch (e: any) {
+            console.error('HLA config not available:', e)
+            setHlaRows([])
+        } finally {
+            setIsHlaLoading(false)
+        }
+    }, [])
+
+    useEffect(() => { 
+        fetchConfig()
+        fetchHlaConfig()
+    }, [fetchConfig, fetchHlaConfig])
 
     const startEdit = (key: string, currentValue: string) => {
         setEditing(prev => new Set(prev).add(key))
@@ -106,6 +129,59 @@ export function PipelineConfigContent() {
         setEditing(new Set())
         setEdits({})
         toast('Unsaved changes discarded.')
+    }
+
+    // HLA Config handlers
+    const startHlaEdit = (key: string, currentValue: string) => {
+        setHlaEditing(prev => new Set(prev).add(key))
+        setHlaEdits(prev => ({ ...prev, [key]: currentValue }))
+    }
+
+    const cancelHlaEdit = (key: string) => {
+        setHlaEditing(prev => { const s = new Set(prev); s.delete(key); return s })
+    }
+
+    const handleHlaChange = (key: string, value: string) => {
+        setHlaEdits(prev => ({ ...prev, [key]: value }))
+    }
+
+    const saveHlaSingle = async (key: string) => {
+        const value = hlaEdits[key]
+        if (value === undefined) return
+        setIsHlaSaving(true)
+        try {
+            await axiosClient.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, [{ key, value }])
+            setHlaRows(prev => prev.map(r => r.key === key ? { ...r, value } : r))
+            cancelHlaEdit(key)
+            toast.success(`Saved: ${key}`)
+        } catch {
+            toast.error('HLA config save failed.')
+        } finally {
+            setIsHlaSaving(false)
+        }
+    }
+
+    const saveHlaAll = async () => {
+        const payload = Object.entries(hlaEdits).map(([key, value]) => ({ key, value }))
+        if (!payload.length) { toast('Nothing to save.'); return }
+        setIsHlaSaving(true)
+        try {
+            await axiosClient.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload)
+            setHlaRows(prev => prev.map(r => hlaEdits[r.key] !== undefined ? { ...r, value: hlaEdits[r.key] } : r))
+            setHlaEditing(new Set())
+            setHlaEdits({})
+            toast.success(`Saved ${payload.length} HLA config value(s)`)
+        } catch {
+            toast.error('HLA config save failed.')
+        } finally {
+            setIsHlaSaving(false)
+        }
+    }
+
+    const resetHlaAll = () => {
+        setHlaEditing(new Set())
+        setHlaEdits({})
+        toast('HLA unsaved changes discarded.')
     }
 
     const byStage = groupBy(rows, 'stage')
@@ -192,10 +268,15 @@ export function PipelineConfigContent() {
                                                                 <div className="space-y-1">
                                                                     <input
                                                                         autoFocus
+                                                                        type={row.key.startsWith('hla_') ? 'number' : 'text'}
+                                                                        min={row.key.startsWith('hla_') ? 1 : undefined}
+                                                                        max={row.key.startsWith('hla_') ? 100 : undefined}
                                                                         value={edits[row.key] ?? row.value}
                                                                         onChange={e => handleChange(row.key, e.target.value)}
-                                                                        className={`w-full px-3 py-1.5 border-2 rounded-lg font-mono text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white ${(row.key === 'neo_num_cores' && parseInt(edits[row.key] ?? row.value) > 300) ||
-                                                                                (row.key !== 'neo_num_cores' && (edits[row.key] ?? row.value).trim() && !(edits[row.key] ?? row.value).trim().toLowerCase().startsWith('s3://'))
+                                                                        className={`w-full px-3 py-1.5 border-2 rounded-lg font-mono text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white ${
+                                                                            (row.key === 'neo_num_cores' && parseInt(edits[row.key] ?? row.value) > 300) ||
+                                                                            (row.key.startsWith('hla_') && (parseInt(edits[row.key] ?? row.value) < 1 || parseInt(edits[row.key] ?? row.value) > 100)) ||
+                                                                            (!row.key.startsWith('hla_') && row.key !== 'neo_num_cores' && (edits[row.key] ?? row.value).trim() && !(edits[row.key] ?? row.value).trim().toLowerCase().startsWith('s3://'))
                                                                                 ? 'border-red-400 focus:ring-red-500'
                                                                                 : 'border-teal-400'
                                                                             }`}
@@ -205,7 +286,12 @@ export function PipelineConfigContent() {
                                                                             ⚠ Maximum limit is 300 cores.
                                                                         </p>
                                                                     )}
-                                                                    {row.key !== 'neo_num_cores' && (edits[row.key] ?? row.value).trim() && !(edits[row.key] ?? row.value).trim().toLowerCase().startsWith('s3://') && (
+                                                                    {row.key.startsWith('hla_') && (parseInt(edits[row.key] ?? row.value) < 1 || parseInt(edits[row.key] ?? row.value) > 100) && (
+                                                                        <p className="text-[10px] text-red-600 font-bold animate-pulse">
+                                                                            ⚠ Value must be between 1 and 100.
+                                                                        </p>
+                                                                    )}
+                                                                    {!row.key.startsWith('hla_') && row.key !== 'neo_num_cores' && (edits[row.key] ?? row.value).trim() && !(edits[row.key] ?? row.value).trim().toLowerCase().startsWith('s3://') && (
                                                                         <p className="text-[10px] text-red-600 font-bold animate-pulse">
                                                                             ⚠ Invalid S3 link. Must start with s3://
                                                                         </p>
@@ -264,6 +350,147 @@ export function PipelineConfigContent() {
                         </div>
                     )
                 })
+            )}
+
+            {/* HLA Configuration Section - Different Table Design */}
+            {!isHlaLoading && hlaRows.length > 0 && (
+                <>
+                    <div className="flex items-start justify-between mt-12 pt-8 border-t-4 border-emerald-200">
+                        <div>
+                            <h2 className="text-2xl font-bold text-emerald-800 flex items-center gap-3">
+                                <svg className="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                </svg>
+                                arcasHLA Configuration
+                            </h2>
+                            <p className="text-emerald-600 mt-1.5 text-sm font-medium">
+                                Stage 1.5 — HLA Typing Pipeline Settings
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                            {hlaEditing.size > 0 && (
+                                <button
+                                    onClick={resetHlaAll}
+                                    className="flex items-center gap-2 px-4 py-2 border-2 border-emerald-300 rounded-lg text-emerald-700 hover:bg-emerald-50 transition-colors text-sm font-semibold"
+                                >
+                                    <RotateCcw className="w-4 h-4" /> Discard
+                                </button>
+                            )}
+                            <button
+                                onClick={saveHlaAll}
+                                disabled={isHlaSaving || hlaEditing.size === 0}
+                                className="flex items-center gap-2 px-5 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-40 transition-colors text-sm font-bold shadow-lg shadow-emerald-200"
+                            >
+                                <Save className="w-4 h-4" />
+                                {isHlaSaving ? 'Saving…' : `Save${hlaEditing.size > 0 ? ` (${hlaEditing.size})` : ''}`}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Card-based Table Layout */}
+                    <div className="grid gap-4">
+                        {hlaRows.map((row) => {
+                            const isEdit = hlaEditing.has(row.key)
+                            return (
+                                <div 
+                                    key={row.key} 
+                                    className={`rounded-xl border-2 overflow-hidden transition-all ${
+                                        isEdit 
+                                            ? 'border-amber-400 bg-amber-50/30 shadow-lg' 
+                                            : 'border-emerald-200 bg-white hover:border-emerald-300 hover:shadow-md'
+                                    }`}
+                                >
+                                    <div className="bg-gradient-to-r from-emerald-50 to-emerald-100/50 px-6 py-3 border-b-2 border-emerald-200">
+                                        <div className="flex items-center justify-between">
+                                            <div>
+                                                <h3 className="font-bold text-emerald-900 text-base">{row.label || row.key}</h3>
+                                                <p className="text-xs text-emerald-600 font-mono mt-0.5">{row.key}</p>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-emerald-600 font-medium">
+                                                    {new Date(row.updated_at).toLocaleDateString('en-US', {
+                                                        month: 'short', day: 'numeric', year: 'numeric'
+                                                    })}
+                                                </span>
+                                                {isEdit ? (
+                                                    <>
+                                                        <button
+                                                            onClick={() => saveHlaSingle(row.key)}
+                                                            disabled={isHlaSaving}
+                                                            title="Save"
+                                                            className="p-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 transition-colors shadow"
+                                                        >
+                                                            <Check className="w-4 h-4" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => cancelHlaEdit(row.key)}
+                                                            title="Cancel"
+                                                            className="p-2 rounded-lg border-2 border-slate-300 text-slate-600 hover:bg-slate-100 transition-colors"
+                                                        >
+                                                            <X className="w-4 h-4" />
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => startHlaEdit(row.key, row.value)}
+                                                        title="Edit"
+                                                        className="p-2 rounded-lg border-2 border-emerald-300 text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="px-6 py-4">
+                                        {isEdit ? (
+                                            <div className="space-y-2">
+                                                <label className="block text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                                                    {row.key === 'hla_threads' ? 'Thread Count (1-100)' : 'Configuration Value'}
+                                                </label>
+                                                <input
+                                                    autoFocus
+                                                    type={row.key === 'hla_threads' ? 'number' : 'text'}
+                                                    min={row.key === 'hla_threads' ? 1 : undefined}
+                                                    max={row.key === 'hla_threads' ? 100 : undefined}
+                                                    value={hlaEdits[row.key] ?? row.value}
+                                                    onChange={e => handleHlaChange(row.key, e.target.value)}
+                                                    className={`w-full px-4 py-3 border-2 rounded-lg font-mono text-sm focus:outline-none focus:ring-4 focus:ring-emerald-200 ${
+                                                        row.key === 'hla_threads' && (parseInt(hlaEdits[row.key] ?? row.value) < 1 || parseInt(hlaEdits[row.key] ?? row.value) > 100)
+                                                            ? 'border-red-400 bg-red-50 focus:ring-red-200'
+                                                            : 'border-emerald-300 bg-emerald-50/30'
+                                                    }`}
+                                                />
+                                                {row.key === 'hla_threads' && (parseInt(hlaEdits[row.key] ?? row.value) < 1 || parseInt(hlaEdits[row.key] ?? row.value) > 100) && (
+                                                    <div className="flex items-center gap-2 text-red-600 bg-red-50 px-3 py-2 rounded-lg border border-red-200">
+                                                        <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                                        </svg>
+                                                        <p className="text-xs font-bold">
+                                                            Threads must be between 1 and 100
+                                                        </p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                                    Current Value
+                                                </label>
+                                                <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
+                                                    <span className="font-mono text-sm text-emerald-900 font-semibold break-all">
+                                                        {row.value}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )
+                        })}
+                    </div>
+                </>
             )}
         </div>
     )
