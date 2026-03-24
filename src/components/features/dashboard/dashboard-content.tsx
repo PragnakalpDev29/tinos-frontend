@@ -8,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { useJobStatusWebSocket } from '@/hooks/use-job-status-websocket'
 import type { User } from '@/types/auth'
 import { Plus, Filter, RefreshCcw, LayoutDashboard, Activity, CheckCircle2, AlertCircle } from 'lucide-react'
-import { jobService } from '@/lib/services/job.service'
+import { jobService, ArcasHlaJobData } from '@/lib/services/job.service'
 
 interface DashboardContentProps {
   user: User | null
@@ -36,6 +36,7 @@ interface JobData {
   linked_neoantigen_id?: number
   failure_reason?: string
   linked_neoantigen_failure_reason?: string
+  linked_arcas_hla?: ArcasHlaJobData | null
 }
 
 const JOB_STATUS_OPTIONS = [
@@ -264,8 +265,14 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
         if (item.pipeline_type === 'Preprocessing') {
           return (
             <div className="flex flex-col gap-1.5">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 {renderBatchStatus(item.status, 'Stage 1: Prep')}
+                {item.linked_arcas_hla && (
+                  <>
+                    <div className="h-4 w-px bg-slate-200 self-end mb-1 mx-1" />
+                    {renderBatchStatus(item.linked_arcas_hla.status, 'HLA')}
+                  </>
+                )}
                 {item.linked_neoantigen_status && (
                   <>
                     <div className="h-4 w-px bg-slate-200 self-end mb-1 mx-1" />
@@ -277,6 +284,12 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
               {item.status === 'FAILED' && item.failure_reason && (
                 <p className="text-[10px] text-red-500 font-medium max-w-[200px] truncate" title={`Stage 1 Error: ${item.failure_reason}`}>
                   S1 Error: {item.failure_reason}
+                </p>
+              )}
+              {/* Show HLA failure reason */}
+              {item.linked_arcas_hla?.status === 'FAILED' && item.linked_arcas_hla.failure_reason && (
+                <p className="text-[10px] text-orange-600 font-medium max-w-[200px] truncate" title={`HLA Error: ${item.linked_arcas_hla.failure_reason}`}>
+                  HLA Error: {item.linked_arcas_hla.failure_reason}
                 </p>
               )}
               {/* Show Stage 2 failure reason */}

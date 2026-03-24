@@ -26,6 +26,69 @@ export interface PreprocessingJobSubmissionResponse {
   jobDefinition: string
 }
 
+export interface ArcasHlaJobData {
+  id?: number
+  batch_job_id: string
+  job_name: string
+  s3_input_prefix: string
+  s3_output_prefix: string
+  s3_effective_output_prefix: string
+  threads: number
+  file_count: number
+  job_queue: string
+  job_definition: string
+  status: string
+  failure_reason: string | null
+  created_at?: string
+  updated_at?: string
+}
+
+export interface ArcasHlaSubmissionDto {
+  s3_input_prefix: string
+  s3_output_prefix: string
+  threads: number
+  job_name?: string
+}
+
+export interface ArcasHlaSubmissionResponse {
+  message: string
+  jobId: string
+  threads: number
+  fileCount: number
+  s3_input_prefix: string
+  s3_output_prefix: string
+  s3_effective_output_prefix: string
+  arcasHla: ArcasHlaJobData
+}
+
+export interface PipelineStatusResponse {
+  pipeline_id: number
+  stage1: {
+    id: number
+    batch_id: string
+    status: string
+    type: string
+  }
+  stage1_hla: {
+    id: number
+    batch_id: string
+    status: string
+    type: string
+    s3_input_prefix: string
+    s3_output_prefix: string
+    s3_effective_output_prefix: string
+    threads: number
+    file_count: number
+    failure_reason: string | null
+  } | null
+  stage2: {
+    id: number
+    batch_id: string
+    status: string
+    type: string
+  } | null
+}
+
 export const jobService = {
   /**
    * Submit a preprocessing job to AWS Batch
@@ -104,8 +167,25 @@ export const jobService = {
    */
   syncActiveJobs: async (): Promise<{ message: string; synced_count: number }> => {
     return post<{ message: string; synced_count: number }>(
-      '/api/sync-active-jobs/',
+      API_ENDPOINTS.JOBS.SYNC_ACTIVE_JOBS,
       {}
     )
+  },
+
+  /**
+   * Get comprehensive pipeline status including HLA job
+   * GET /api/pipeline-status/{job_id}/
+   */
+  getPipelineStatus: async (jobId: string): Promise<PipelineStatusResponse> => {
+    const { get } = await import('@/lib/api/axios-client')
+    return get<PipelineStatusResponse>(API_ENDPOINTS.JOBS.PIPELINE_STATUS(jobId))
+  },
+
+  /**
+   * Submit a standalone arcasHLA job
+   * POST /api/submit-arcas-hla/
+   */
+  submitArcasHlaJob: async (data: ArcasHlaSubmissionDto): Promise<ArcasHlaSubmissionResponse> => {
+    return post<ArcasHlaSubmissionResponse>(API_ENDPOINTS.JOBS.SUBMIT_ARCAS_HLA, data)
   },
 }

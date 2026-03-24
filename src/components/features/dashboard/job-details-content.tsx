@@ -6,7 +6,7 @@ import { ArrowLeft, Copy, Check, CheckCircle, XCircle, Loader2, GitBranch, Clock
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useJobStatusWebSocket } from '@/hooks/use-job-status-websocket'
-import { jobService } from '@/lib/services/job.service'
+import { jobService, ArcasHlaJobData } from '@/lib/services/job.service'
 import { axiosClient } from '@/lib/api/axios-client'
 
 interface JobData {
@@ -39,6 +39,7 @@ interface JobData {
   s3_output?: string
   s3_logs?: string
   failure_reason?: string | null
+  linked_arcas_hla?: ArcasHlaJobData | null
 }
 
 interface ChildJob {
@@ -432,6 +433,117 @@ export function JobDetailsContent({ jobId, jobType }: JobDetailsContentProps) {
                   </div>
                 )
               })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ── Linked HLA Job Section (preprocessing view only) ── */}
+      {jobType === 'preprocessing' && job.linked_arcas_hla && (
+        <Card variant="elevated" className="border-l-4 border-l-emerald-400">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <svg className="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              arcasHLA Job
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Status row */}
+              <div className="flex flex-wrap items-center gap-3">
+                <div>
+                  <p className="text-xs font-medium text-slate-500 mb-1">Job Name</p>
+                  <span className="font-mono text-sm text-slate-800 bg-slate-100 px-2 py-1 rounded">
+                    {job.linked_arcas_hla.job_name}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500 mb-1">Status</p>
+                  {(() => {
+                    const cfg = STATUS_CONFIG[job.linked_arcas_hla.status] || STATUS_CONFIG.SUBMITTED
+                    return (
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-sm font-semibold border ${cfg.bgColor} ${cfg.textColor} ${cfg.borderColor}`}>
+                        <StatusIcon status={job.linked_arcas_hla.status} />
+                        {cfg.label}
+                      </span>
+                    )
+                  })()}
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-slate-500 mb-1">Configuration</p>
+                  <span className="text-sm font-medium text-slate-700">
+                    {job.linked_arcas_hla.threads} threads · {job.linked_arcas_hla.file_count} files
+                  </span>
+                </div>
+              </div>
+
+              {/* Progress bar */}
+              {(() => {
+                const cfg = STATUS_CONFIG[job.linked_arcas_hla.status] || STATUS_CONFIG.SUBMITTED
+                return (
+                  <div>
+                    <div className="flex justify-between text-xs text-slate-500 mb-1">
+                      <span>HLA Typing Progress</span>
+                      <span>{cfg.progress}%</span>
+                    </div>
+                    <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full ${cfg.color} transition-all duration-500 rounded-full`}
+                        style={{ width: `${cfg.progress}%` }}
+                      />
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {/* S3 paths */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Input Prefix</p>
+                  <code className="text-xs text-slate-600 font-mono break-all">{job.linked_arcas_hla.s3_input_prefix}</code>
+                </div>
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                  <p className="text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-1">Output Prefix</p>
+                  <code className="text-xs text-slate-600 font-mono break-all">{job.linked_arcas_hla.s3_output_prefix}</code>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 md:col-span-2">
+                  <p className="text-[10px] uppercase tracking-wider text-emerald-600 font-bold mb-1">Effective Output (Job Results)</p>
+                  <code className="text-xs text-emerald-700 font-mono break-all">{job.linked_arcas_hla.s3_effective_output_prefix}</code>
+                  <p className="text-[9px] text-emerald-600 mt-1">Contains: *.genotype.log, *.genotype.json, etc.</p>
+                </div>
+              </div>
+
+              {/* Batch job details */}
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-3">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                  <div>
+                    <p className="text-slate-500 font-medium mb-0.5">Batch Job ID</p>
+                    <code className="text-slate-700 font-mono text-[10px]">{job.linked_arcas_hla.batch_job_id.substring(0, 8)}...</code>
+                  </div>
+                  <div>
+                    <p className="text-slate-500 font-medium mb-0.5">Job Queue</p>
+                    <code className="text-slate-700 font-mono text-[10px]">{job.linked_arcas_hla.job_queue}</code>
+                  </div>
+                  <div>
+                    <p className="text-slate-500 font-medium mb-0.5">Job Definition</p>
+                    <code className="text-slate-700 font-mono text-[10px]">{job.linked_arcas_hla.job_definition}</code>
+                  </div>
+                  <div>
+                    <p className="text-slate-500 font-medium mb-0.5">Threads</p>
+                    <span className="text-slate-700 font-semibold">{job.linked_arcas_hla.threads}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Failure reason */}
+              {job.linked_arcas_hla.status === 'FAILED' && job.linked_arcas_hla.failure_reason && (
+                <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded-lg">
+                  <p className="text-xs font-semibold text-red-900 mb-1">HLA Job Failed</p>
+                  <p className="text-xs font-mono text-red-800 break-words">{job.linked_arcas_hla.failure_reason}</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
