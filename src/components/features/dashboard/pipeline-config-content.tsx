@@ -97,29 +97,57 @@ export function PipelineConfigContent() {
         if (value === undefined) return
         setIsSaving(true)
         try {
-            await axiosClient.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG, [{ key, value }])
+            const endpoint = key.startsWith('hla_') 
+                ? API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA 
+                : API_ENDPOINTS.JOBS.PIPELINE_CONFIG
+            const parsedValue = key.startsWith('hla_') || key === 'neo_num_cores' ? parseInt(value) : value
+            const payload = key.startsWith('hla_') 
+                ? { key, threads: parsedValue }
+                : { key, value: parsedValue }
+            console.log('Saving config:', { key, endpoint, payload })
+            await axiosClient.patch(endpoint, payload)
             setRows(prev => prev.map(r => r.key === key ? { ...r, value } : r))
             cancelEdit(key)
             toast.success(`Saved: ${key}`)
-        } catch {
-            toast.error('Save failed.')
+        } catch (error: any) {
+            console.error('Config save error:', error.response?.data || error.message)
+            toast.error(`Save failed: ${error.response?.data?.detail || error.message}`)
         } finally {
             setIsSaving(false)
         }
     }
 
     const saveAll = async () => {
-        const payload = Object.entries(edits).map(([key, value]) => ({ key, value }))
-        if (!payload.length) { toast('Nothing to save.'); return }
+        const allEdits = Object.entries(edits).map(([key, value]) => {
+            const parsedValue = key.startsWith('hla_') || key === 'neo_num_cores' ? parseInt(value) : value
+            return { key, parsedValue, isHla: key.startsWith('hla_') }
+        })
+        if (!allEdits.length) { toast('Nothing to save.'); return }
         setIsSaving(true)
         try {
-            await axiosClient.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG, payload)
+            const hlaItems = allEdits.filter(item => item.isHla)
+            const regularItems = allEdits.filter(item => !item.isHla)
+            
+            const promises: Promise<any>[] = []
+            regularItems.forEach(({ key, parsedValue }) => {
+                const payload = { key, value: parsedValue }
+                console.log('Saving regular config:', { endpoint: API_ENDPOINTS.JOBS.PIPELINE_CONFIG, payload })
+                promises.push(axiosClient.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG, payload))
+            })
+            hlaItems.forEach(({ key, parsedValue }) => {
+                const payload = { key, threads: parsedValue }
+                console.log('Saving HLA config:', { endpoint: API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload })
+                promises.push(axiosClient.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload))
+            })
+            
+            await Promise.all(promises)
             setRows(prev => prev.map(r => edits[r.key] !== undefined ? { ...r, value: edits[r.key] } : r))
             setEditing(new Set())
             setEdits({})
-            toast.success(`Saved ${payload.length} value(s)`)
-        } catch {
-            toast.error('Save failed.')
+            toast.success(`Saved ${allEdits.length} value(s)`)
+        } catch (error: any) {
+            console.error('Save all error:', error.response?.data || error.message)
+            toast.error(`Save failed: ${error.response?.data?.detail || error.message}`)
         } finally {
             setIsSaving(false)
         }
@@ -150,29 +178,42 @@ export function PipelineConfigContent() {
         if (value === undefined) return
         setIsHlaSaving(true)
         try {
-            await axiosClient.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, [{ key, value }])
+            const parsedValue = key === 'hla_threads' ? parseInt(value) : value
+            const payload = { key, threads: parsedValue }
+            console.log('Saving HLA config:', { endpoint: API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload })
+            await axiosClient.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload)
             setHlaRows(prev => prev.map(r => r.key === key ? { ...r, value } : r))
             cancelHlaEdit(key)
             toast.success(`Saved: ${key}`)
-        } catch {
-            toast.error('HLA config save failed.')
+        } catch (error: any) {
+            console.error('HLA config save error:', error.response?.data || error.message)
+            toast.error(`HLA config save failed: ${error.response?.data?.detail || error.message}`)
         } finally {
             setIsHlaSaving(false)
         }
     }
 
     const saveHlaAll = async () => {
-        const payload = Object.entries(hlaEdits).map(([key, value]) => ({ key, value }))
-        if (!payload.length) { toast('Nothing to save.'); return }
+        const hlaItems = Object.entries(hlaEdits).map(([key, value]) => {
+            const parsedValue = key === 'hla_threads' ? parseInt(value) : value
+            return { key, parsedValue }
+        })
+        if (!hlaItems.length) { toast('Nothing to save.'); return }
         setIsHlaSaving(true)
         try {
-            await axiosClient.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload)
+            const promises = hlaItems.map(({ key, parsedValue }) => {
+                const payload = { key, threads: parsedValue }
+                console.log('Saving HLA config:', { endpoint: API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload })
+                return axiosClient.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload)
+            })
+            await Promise.all(promises)
             setHlaRows(prev => prev.map(r => hlaEdits[r.key] !== undefined ? { ...r, value: hlaEdits[r.key] } : r))
             setHlaEditing(new Set())
             setHlaEdits({})
-            toast.success(`Saved ${payload.length} HLA config value(s)`)
-        } catch {
-            toast.error('HLA config save failed.')
+            toast.success(`Saved ${hlaItems.length} HLA config value(s)`)
+        } catch (error: any) {
+            console.error('HLA config save all error:', error.response?.data || error.message)
+            toast.error(`HLA config save failed: ${error.response?.data?.detail || error.message}`)
         } finally {
             setIsHlaSaving(false)
         }
