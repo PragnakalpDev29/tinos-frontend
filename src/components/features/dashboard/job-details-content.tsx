@@ -410,7 +410,7 @@ export function JobDetailsContent({ jobId, jobType }: JobDetailsContentProps) {
                             <StatusIcon status={child.status} />
                             {cfg.label}
                           </span>
-                          <span className="text-xs text-slate-400 truncate font-mono">{child.job_id}</span>
+                          <span className="text-xs text-slate-400 truncate font-mono" title={child.job_id}>{child.label}</span>
                         </div>
                         <div className="relative w-full h-2 bg-slate-200 rounded-full overflow-hidden">
                           <div
