@@ -98,7 +98,16 @@ const authOptions: AuthOptions = {
   },
   callbacks: {
     async session({ session, token }) {
-      session = token as any
+      // SECURITY: Only expose safe fields to client — never expose refresh token
+      if (token) {
+        session.user = {
+          ...(session.user || {}),
+          id: token.sub || (token as any).id,
+          role: (token as any).user?.role,
+          access: (token as any).access,
+          // NEVER expose refresh token to client-side JavaScript
+        }
+      }
       return session
     },
     async jwt({ token, user, trigger, session }) {
@@ -106,7 +115,12 @@ const authOptions: AuthOptions = {
         token.user = session.user
         return token
       }
-      return { ...token, ...user }
+      if (user) {
+        token.access = (user as any).access
+        token.refresh = (user as any).refresh  // Keep refresh in encrypted server-side JWT only
+        token.user = user
+      }
+      return token
     },
   },
   pages: {

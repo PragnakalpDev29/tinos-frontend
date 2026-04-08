@@ -29,7 +29,8 @@ export function ProfileContent({ user, isLoading, onUserUpdate }: ProfileContent
     try {
       const response = await authService.updateProfile({ name })
       onUserUpdate(response.user)
-      localStorage.setItem('user', JSON.stringify(response.user))
+      // SECURITY: Do NOT store user data in localStorage.
+      // The parent component manages state via React state.
       toast.success('Profile updated successfully!')
     } catch (error) {
       console.error('Failed to update profile:', error)

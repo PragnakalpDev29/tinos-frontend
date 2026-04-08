@@ -6,12 +6,15 @@ import { s3Client, getUploadMetadata, saveUploadMetadata, deleteUploadMetadata, 
 const BUCKET_NAME = process.env.BUCKET_NAME || 'epicode-neoantigen'
 
 export async function OPTIONS(request: NextRequest) {
+    // SECURITY: Restrict CORS to specific origins instead of wildcard '*'
+    const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://your-domain.com'
     return new NextResponse(null, {
         status: 200,
         headers: {
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': allowedOrigin,
             'Access-Control-Allow-Methods': 'PATCH, HEAD, DELETE, OPTIONS',
             'Access-Control-Allow-Headers': 'Origin, Content-Type, Upload-Length, Upload-Offset, Tus-Resumable, Upload-Metadata',
+            'Access-Control-Allow-Credentials': 'true',
             'Tus-Resumable': '1.0.0',
         },
     })
@@ -73,10 +76,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
         const newOffset = offset + chunk.byteLength
 
+        const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://your-domain.com'
         const headers: Record<string, string> = {
             'Upload-Offset': newOffset.toString(),
             'Tus-Resumable': '1.0.0',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': allowedOrigin,
             'Access-Control-Expose-Headers': 'Upload-Offset, Tus-Resumable',
         }
 
@@ -149,11 +153,12 @@ export async function HEAD(request: NextRequest, { params }: { params: Promise<{
             return sum + (part.partNumber * CHUNK_SIZE)
         }, 0)
 
+        const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://your-domain.com'
         const headers: Record<string, string> = {
             'Upload-Offset': Math.min(currentOffset, upload.size).toString(),
             'Upload-Length': upload.size.toString(),
             'Tus-Resumable': '1.0.0',
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': allowedOrigin,
             'Access-Control-Expose-Headers': 'Upload-Offset, Upload-Length, Tus-Resumable',
         }
 
@@ -215,7 +220,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
             status: 204,
             headers: {
                 'Tus-Resumable': '1.0.0',
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://your-domain.com',
             },
         })
     } catch (error) {

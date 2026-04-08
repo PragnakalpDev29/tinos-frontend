@@ -17,10 +17,14 @@ interface NeoantigenJobFormData {
 }
 
 export function NeoantigenJobForm() {
+    // SECURITY: Do NOT hardcode S3 bucket paths in frontend code.
+    // Use environment variables — these should be configured per deployment.
+    const defaultS3Base = process.env.NEXT_PUBLIC_DEFAULT_S3_BASE_PATH || ''
+
     const [formData, setFormData] = useState<NeoantigenJobFormData>({
         run_name: '',
         cores: 120,
-        s3_base: 's3://epicode-neoantigen/pragnakalp/dhyanesh/newdata',
+        s3_base: defaultS3Base,
         s3_consolidated_rna_bam: '',
         s3_hla_output: '',
         s3_reference_data: '',
@@ -68,7 +72,7 @@ export function NeoantigenJobForm() {
             setFormData({
                 run_name: '',
                 cores: 120,
-                s3_base: 's3://epicode-neoantigen/pragnakalp/dhyanesh/newdata',
+                s3_base: defaultS3Base,
                 s3_consolidated_rna_bam: '',
                 s3_hla_output: '',
                 s3_reference_data: '',
@@ -222,7 +226,7 @@ export function NeoantigenJobForm() {
                             setFormData({
                                 run_name: '',
                                 cores: 120,
-                                s3_base: 's3://epicode-neoantigen/pragnakalp/dhyanesh/newdata',
+                                s3_base: defaultS3Base,
                                 s3_consolidated_rna_bam: '',
                                 s3_hla_output: '',
                                 s3_reference_data: '',

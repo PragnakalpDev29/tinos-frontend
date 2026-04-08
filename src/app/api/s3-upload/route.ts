@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 import { getServerSession } from 'next-auth'
 
+// SECURITY: Enforce file size and count limits to prevent memory exhaustion / DoS
+const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB per file
+const MAX_FILES = 10
+
 const AWS_REGION = process.env.AWS_REGION || ''
 const ACCESS_KEY = process.env.ACCESS_KEY || ''
 const SECRET_KEY = process.env.SECRET_KEY || ''
@@ -85,6 +89,24 @@ export async function POST(request: NextRequest) {
         { success: false, message: 'No files provided' },
         { status: 400 }
       )
+    }
+
+    // SECURITY: Enforce file count limit
+    if (files.length > MAX_FILES) {
+      return NextResponse.json(
+        { success: false, message: `Maximum ${MAX_FILES} files allowed per upload` },
+        { status: 400 }
+      )
+    }
+
+    // SECURITY: Validate each file size before loading into memory
+    for (const file of files) {
+      if (file.size > MAX_FILE_SIZE) {
+        return NextResponse.json(
+          { success: false, message: `File "${file.name}" exceeds the ${MAX_FILE_SIZE / (1024 * 1024)}MB limit` },
+          { status: 400 }
+        )
+      }
     }
 
     if (!s3BucketUrl) {

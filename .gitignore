@@ -33,3 +33,5 @@ yarn-error.log*
 *. tsbuildinfo
 next-env.d. ts
 
+/SECURITY_AUDIT_REPORT.md
+/S3_UPLOAD_README.md

@@ -13,36 +13,26 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchUserData = async () => {
-      // 1. Use cached localStorage user immediately (fastest)
-      const storedUser = localStorage.getItem('user')
-      if (storedUser) {
-        try {
-          setUser(JSON.parse(storedUser))
-        } catch {
-          // ignore malformed cache
+      // SECURITY: Use NextAuth session as the primary source of truth.
+      // Do NOT cache user data in localStorage (XSS-vulnerable).
+      if (session) {
+        const s = session as any
+        const sessionUser: User = {
+          id: s?.user?.id || s?.id || s?.sub || '',
+          email: s?.user?.email || s?.email || '',
+          name: s?.user?.name || s?.name || '',
+          date_joined: s?.user?.date_joined || s?.date_joined || '',
+          is_active: s?.user?.is_active ?? s?.is_active ?? true,
         }
+        setUser(sessionUser)
       }
 
-      // 2. Try to refresh from the Django API
+      // Try to refresh from the Django API
       try {
         const profileData = await authService.getProfile()
         setUser(profileData)
-        localStorage.setItem('user', JSON.stringify(profileData))
       } catch {
-        // 3. Fall back to NextAuth session — fields are spread at root level
-        //    (authOptions does `session = token as any`, so session.id, session.email etc.)
-        if (!storedUser) {
-          const s = session as any
-          const fallbackUser: User = {
-            id: s?.id || s?.sub || '',
-            email: s?.email || '',
-            name: s?.name || '',
-            date_joined: s?.date_joined || '',
-            is_active: s?.is_active ?? true,
-          }
-          setUser(fallbackUser)
-          localStorage.setItem('user', JSON.stringify(fallbackUser))
-        }
+        // Fall back to NextAuth session data (already set above)
       } finally {
         setIsLoading(false)
       }

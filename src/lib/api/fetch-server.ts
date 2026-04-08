@@ -2,9 +2,12 @@
  * Fetch Utility for Server Components
  * Use this in Server Components (async components without 'use client')
  * Features: Built-in caching, ISR, On-demand revalidation
+ *
+ * SECURITY: No development artifacts (ngrok headers) in production.
+ * API_TOKEN should be rotated regularly and stored in a secrets manager.
  */
 
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API || 'http://localhost:8001'
+const BASE_URL = process.env.BACKEND_API_URL || 'http://localhost:8001'
 const API_TOKEN = process.env.API_TOKEN
 
 export interface FetchOptions extends RequestInit {
@@ -28,7 +31,6 @@ export async function fetchServer<T>(
   const defaultHeaders: HeadersInit = {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'ngrok-skip-browser-warning': '69420',
   }
 
   if (API_TOKEN) {

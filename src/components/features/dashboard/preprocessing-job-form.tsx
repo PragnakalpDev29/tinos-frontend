@@ -62,19 +62,12 @@ export function PreprocessingJobForm() {
   const validateS3Path = async (s3Path: string) => {
     setS3Validation({ status: 'checking' })
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_API || ''
-      const isNgrok = backendUrl.includes('ngrok')
-      const response = await fetch(`${backendUrl}/proxy/api/validate-s3-path/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(isNgrok ? { 'ngrok-skip-browser-warning': '69420' } : {}),
-          'Authorization': `Bearer ${typeof window !== 'undefined' ? localStorage.getItem('accessToken') : ''}`,
-        },
-        body: JSON.stringify({ s3_path: s3Path }),
-      })
+      // SECURITY: Use the axios client which sends httpOnly cookies automatically
+      // instead of reading tokens from localStorage.
+      const { axiosClient } = await import('@/lib/api/axios-client')
+      const response = await axiosClient.post('/proxy/api/validate-s3-path/', { s3_path: s3Path })
 
-      const data = await response.json()
+      const data = response.data
       if (data.valid) {
         setS3Validation({
           status: 'valid',

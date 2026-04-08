@@ -1,5 +1,9 @@
 import { create } from 'zustand'
 
+// SECURITY: Do NOT store authentication tokens, user data, or PII in this store.
+// Use NextAuth session (server-side encrypted cookie) for auth state.
+// This store is for UI state only (sidebar, theme, etc.)
+
 interface UIState {
   sidebarOpen: boolean
   toggleSidebar: () => void

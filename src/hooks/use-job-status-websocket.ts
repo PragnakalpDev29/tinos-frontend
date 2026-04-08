@@ -2,6 +2,13 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 
+// SECURITY: Production-safe logger — suppresses info logs in production
+const logger = {
+  log: (...args: any[]) => process.env.NODE_ENV === 'development' && console.log(...args),
+  warn: (...args: any[]) => process.env.NODE_ENV === 'development' && console.warn(...args),
+  error: (...args: any[]) => console.error(...args), // Always log errors
+}
+
 interface JobStatusUpdate {
   job_id: string
   status: 'SUBMITTED' | 'PENDING' | 'RUNNABLE' | 'STARTING' | 'RUNNING' | 'SUCCEEDED' | 'FAILED'
@@ -29,21 +36,16 @@ export function useJobStatusWebSocket({
 
   const connect = useCallback(() => {
     try {
-      // Get WebSocket URL from environment or construct it
-      // If running through Next.js proxy, we might want to use window.location.host
-      // But usually WS needs a direct connection or specific proxy config.
-      // Let's rely on the env var if set, otherwise fallback to window.location.host (but with ws://)
-
       const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-      const wsHost = process.env.NEXT_PUBLIC_WS_HOST || 'localhost:8000' // Default to Django port
+      const wsHost = process.env.NEXT_PUBLIC_WS_HOST || 'localhost:8000'
       const wsUrl = `${wsProtocol}//${wsHost}/ws/jobs/status/`
 
-      console.log('Connecting to WebSocket:', wsUrl)
+      logger.log('Connecting to WebSocket:', wsUrl)
 
       const ws = new WebSocket(wsUrl)
 
       ws.onopen = () => {
-        console.log('WebSocket connected')
+        logger.log('WebSocket connected')
         setIsConnected(true)
         setConnectionError(null)
         reconnectAttemptsRef.current = 0
@@ -52,20 +54,19 @@ export function useJobStatusWebSocket({
       ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data) as JobStatusUpdate
-          console.log('Received job status update:', data)
+          logger.log('Received job status update:', data)
           if (onStatusUpdate) onStatusUpdate(data)
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error)
+          logger.error('Error parsing WebSocket message:', error)
         }
       }
 
       ws.onerror = (error) => {
-        // console.error('WebSocket error:', error) // Quiet this down
         setConnectionError('WebSocket connection error')
       }
 
       ws.onclose = (event) => {
-        console.log('WebSocket disconnected:', event.code, event.reason)
+        logger.log('WebSocket disconnected:', event.code, event.reason)
         setIsConnected(false)
         wsRef.current = null
 
@@ -75,7 +76,7 @@ export function useJobStatusWebSocket({
           reconnectAttemptsRef.current < maxReconnectAttempts
         ) {
           reconnectAttemptsRef.current += 1
-          console.log(
+          logger.log(
             `Attempting to reconnect (${reconnectAttemptsRef.current}/${maxReconnectAttempts})...`
           )
 
@@ -89,7 +90,7 @@ export function useJobStatusWebSocket({
 
       wsRef.current = ws
     } catch (error) {
-      console.error('Error creating WebSocket connection:', error)
+      logger.error('Error creating WebSocket connection:', error)
       setConnectionError('Failed to create WebSocket connection')
     }
   }, [onStatusUpdate, reconnectInterval, maxReconnectAttempts])
@@ -112,7 +113,7 @@ export function useJobStatusWebSocket({
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message))
     } else {
-      console.warn('WebSocket is not connected. Cannot send message.')
+      logger.warn('WebSocket is not connected. Cannot send message.')
     }
   }, [])
 

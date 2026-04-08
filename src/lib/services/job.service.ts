@@ -1,5 +1,29 @@
-import { post } from '@/lib/api/axios-client'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
+import axios from 'axios'
+
+// Create a dedicated axios instance with Bearer token authentication
+const api = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_BACKEND_API || '/',
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
+})
+
+// Request interceptor to attach Bearer token from session
+api.interceptors.request.use(async (config) => {
+  if (typeof window !== 'undefined') {
+    // Dynamically import NextAuth to get session
+    const { getSession } = await import('next-auth/react')
+    const session = await getSession()
+    const token = (session as any)?.access || session?.user?.access
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`
+    }
+  }
+  return config
+})
 
 export interface PreprocessingJobSubmissionDto {
   s3_rna_bam: string
@@ -97,10 +121,11 @@ export const jobService = {
   submitPreprocessingJob: async (
     data: PreprocessingJobSubmissionDto
   ): Promise<PreprocessingJobSubmissionResponse> => {
-    return post<PreprocessingJobSubmissionResponse>(
+    const response = await api.post<PreprocessingJobSubmissionResponse>(
       API_ENDPOINTS.JOBS.SUBMIT_PREPROCESSING,
       data
     )
+    return response.data
   },
 
   /**
@@ -108,8 +133,8 @@ export const jobService = {
    * GET /api/submit-preprocessing/
    */
   getPreprocessingJobs: async (): Promise<any[]> => {
-    const { get } = await import('@/lib/api/axios-client')
-    return get<any[]>(API_ENDPOINTS.JOBS.SUBMIT_PREPROCESSING)
+    const response = await api.get<any[]>(API_ENDPOINTS.JOBS.SUBMIT_PREPROCESSING)
+    return response.data
   },
 
   /**
@@ -117,8 +142,8 @@ export const jobService = {
    * GET /api/submit-preprocessing/{id}/
    */
   getPreprocessingJobById: async (id: number | string): Promise<any> => {
-    const { get } = await import('@/lib/api/axios-client')
-    return get<any>(`${API_ENDPOINTS.JOBS.SUBMIT_PREPROCESSING}${id}/`)
+    const response = await api.get<any>(`${API_ENDPOINTS.JOBS.SUBMIT_PREPROCESSING}${id}/`)
+    return response.data
   },
 
   /**
@@ -126,8 +151,8 @@ export const jobService = {
    * GET /api/submit-neoantigen/
    */
   getNeoantigenJobs: async (): Promise<any[]> => {
-    const { get } = await import('@/lib/api/axios-client')
-    return get<any[]>(API_ENDPOINTS.JOBS.SUBMIT_NEOANTIGEN)
+    const response = await api.get<any[]>(API_ENDPOINTS.JOBS.SUBMIT_NEOANTIGEN)
+    return response.data
   },
 
   /**
@@ -135,8 +160,8 @@ export const jobService = {
    * GET /api/submit-neoantigen/{id}/
    */
   getNeoantigenJobById: async (id: number | string): Promise<any> => {
-    const { get } = await import('@/lib/api/axios-client')
-    return get<any>(`${API_ENDPOINTS.JOBS.SUBMIT_NEOANTIGEN}${id}/`)
+    const response = await api.get<any>(`${API_ENDPOINTS.JOBS.SUBMIT_NEOANTIGEN}${id}/`)
+    return response.data
   },
 
   /**
@@ -144,10 +169,9 @@ export const jobService = {
    * GET /api/submit-preprocessing/{id}/neoantigen/
    */
   getLinkedNeoantigenJob: async (preprocessingJobId: number | string): Promise<any | null> => {
-    const { get } = await import('@/lib/api/axios-client')
     try {
-      const result = await get<any>(`${API_ENDPOINTS.JOBS.SUBMIT_PREPROCESSING}${preprocessingJobId}/neoantigen/`)
-      return result || null
+      const response = await api.get<any>(`${API_ENDPOINTS.JOBS.SUBMIT_PREPROCESSING}${preprocessingJobId}/neoantigen/`)
+      return response.data || null
     } catch {
       return null
     }
@@ -158,7 +182,8 @@ export const jobService = {
    * POST /api/submit-neoantigen/
    */
   submitNeoantigenJob: async (data: any): Promise<any> => {
-    return post<any>(API_ENDPOINTS.JOBS.SUBMIT_NEOANTIGEN, data)
+    const response = await api.post<any>(API_ENDPOINTS.JOBS.SUBMIT_NEOANTIGEN, data)
+    return response.data
   },
 
   /**
@@ -166,10 +191,11 @@ export const jobService = {
    * POST /api/sync-active-jobs/
    */
   syncActiveJobs: async (): Promise<{ message: string; synced_count: number }> => {
-    return post<{ message: string; synced_count: number }>(
+    const response = await api.post<{ message: string; synced_count: number }>(
       API_ENDPOINTS.JOBS.SYNC_ACTIVE_JOBS,
       {}
     )
+    return response.data
   },
 
   /**
@@ -177,8 +203,8 @@ export const jobService = {
    * GET /api/pipeline-status/{job_id}/
    */
   getPipelineStatus: async (jobId: string): Promise<PipelineStatusResponse> => {
-    const { get } = await import('@/lib/api/axios-client')
-    return get<PipelineStatusResponse>(API_ENDPOINTS.JOBS.PIPELINE_STATUS(jobId))
+    const response = await api.get<PipelineStatusResponse>(API_ENDPOINTS.JOBS.PIPELINE_STATUS(jobId))
+    return response.data
   },
 
   /**
@@ -186,6 +212,7 @@ export const jobService = {
    * POST /api/submit-arcas-hla/
    */
   submitArcasHlaJob: async (data: ArcasHlaSubmissionDto): Promise<ArcasHlaSubmissionResponse> => {
-    return post<ArcasHlaSubmissionResponse>(API_ENDPOINTS.JOBS.SUBMIT_ARCAS_HLA, data)
+    const response = await api.post<ArcasHlaSubmissionResponse>(API_ENDPOINTS.JOBS.SUBMIT_ARCAS_HLA, data)
+    return response.data
   },
 }

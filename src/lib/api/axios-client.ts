@@ -1,7 +1,11 @@
 /**
  * Global Axios Client
  * Use this for all API requests in both Client and Server Components
- * Features: Auto JSON parsing, Interceptors, Token refresh, CSRF handling, Timeout
+ * Features: Auto JSON parsing, Interceptors, CSRF handling, Timeout
+ *
+ * SECURITY: Authentication is handled via httpOnly cookies managed by NextAuth.
+ * We do NOT read tokens from localStorage (XSS-vulnerable).
+ * The `withCredentials: true` option ensures cookies are sent automatically.
  */
 
 'use client'
@@ -10,42 +14,22 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig, AxiosResp
 
 const BASE_URL = process.env.NEXT_PUBLIC_BACKEND_API || '/'
 
-const isNgrok = BASE_URL.includes('ngrok')
-
 export const axiosClient: AxiosInstance = axios.create({
   baseURL: BASE_URL,
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    ...(isNgrok ? { 'ngrok-skip-browser-warning': '69420' } : {}),
   },
   withCredentials: true,
 })
 
 
-// Request interceptor - add auth token and CSRF token
+// Request interceptor - add CSRF token only (auth via httpOnly cookie)
 axiosClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // if (process.env.NODE_ENV === 'development') {
-    //   console.log('API Request:', {
-    //     method: config.method?.toUpperCase(),
-    //     url: config.url,
-    //     baseURL: config.baseURL,
-    //     data: config.data,
-    //     withCredentials: config.withCredentials,
-    //   })
-    // }
-
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('accessToken')
-      if (token && config.headers) {
-        config.headers.Authorization = `Bearer ${token}`
-        // if (process.env.NODE_ENV === 'development') {
-        //   console.log('Using Token:', token.substring(0, 10) + '...')
-        // }
-      }
-
+      // Extract CSRF token from Django's csrftoken cookie for double-submit pattern
       const csrfToken = document.cookie
         .split('; ')
         .find(row => row.startsWith('csrftoken='))
@@ -64,20 +48,13 @@ axiosClient.interceptors.request.use(
   }
 )
 
-// Response interceptor - handle errors globally and auto token refresh
+// Response interceptor - handle errors globally
 axiosClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    // if (process.env.NODE_ENV === 'development') {
-    //   console.log('API Response:', {
-    //     status: response.status,
-    //     url: response.config.url,
-    //     data: response.data,
-    //   })
-    // }
     return response
   },
   async (error: AxiosError) => {
-    // Only log non-401 errors in dev — 401s are expected and handled by token refresh below
+    // Only log non-401 errors in dev
     if (process.env.NODE_ENV === 'development' && error.response?.status !== 401) {
       console.error('API Response Error:', {
         status: error.response?.status,
@@ -87,54 +64,13 @@ axiosClient.interceptors.response.use(
       })
     }
 
-    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
-
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true
-
-      try {
-        if (typeof window !== 'undefined') {
-          const refreshToken = localStorage.getItem('refreshToken')
-
-          if (refreshToken) {
-            const response = await axios.post(
-              `${BASE_URL}/api/auth/token/refresh/`,
-              { refresh: refreshToken },
-              {
-                withCredentials: true,
-                headers: {
-                  'Content-Type': 'application/json',
-                  'ngrok-skip-browser-warning': '69420'
-                }
-              }
-            )
-
-            const { access, refresh } = response.data
-            localStorage.setItem('accessToken', access)
-            if (refresh) {
-              localStorage.setItem('refreshToken', refresh)
-            }
-
-            // Also update the cookie for the proxy/middleware
-            if (typeof window !== 'undefined') {
-              document.cookie = `accessToken=${access}; path=/; max-age=${7 * 24 * 3600}; SameSite=Lax`
-            }
-
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${access}`
-            }
-
-            return axiosClient(originalRequest)
-          }
-        }
-      } catch (refreshError) {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('accessToken')
-          localStorage.removeItem('refreshToken')
-          localStorage.removeItem('user')
-          window.location.href = '/login'
-        }
-        return Promise.reject(refreshError)
+    // On 401, trigger NextAuth session update and redirect to login
+    if (error.response?.status === 401) {
+      if (typeof window !== 'undefined') {
+        // Dispatch event for NextAuth to handle session refresh
+        window.dispatchEvent(new CustomEvent('nextauth-session-expired'))
+        // Clear the middleware detection cookie
+        document.cookie = 'accessToken=; path=/; max-age=0; SameSite=Strict; Secure'
       }
     }
 

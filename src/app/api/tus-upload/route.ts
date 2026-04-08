@@ -10,12 +10,14 @@ const SECRET_KEY = process.env.SECRET_KEY || ''
 const BUCKET_NAME = process.env.BUCKET_NAME || 'epicode-neoantigen'
 
 export async function OPTIONS(request: NextRequest) {
+    const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://your-domain.com'
     return new NextResponse(null, {
         status: 200,
         headers: {
-            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Origin': allowedOrigin,
             'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
             'Access-Control-Allow-Headers': 'Origin, Content-Type, Upload-Length, Upload-Offset, Tus-Resumable, Upload-Metadata, X-S3-Bucket-Url, X-Timestamp-Folder',
+            'Access-Control-Allow-Credentials': 'true',
             'Tus-Resumable': '1.0.0',
         },
     })
@@ -105,7 +107,14 @@ export async function POST(request: NextRequest) {
 
                 if (key === 'filename') {
                     try {
-                        filename = Buffer.from(value, 'base64').toString('utf-8')
+                        let decoded = Buffer.from(value, 'base64').toString('utf-8')
+                        // SECURITY: Sanitize filename to prevent path traversal attacks
+                        // Strip null bytes, path components, and limit length
+                        decoded = decoded.replace(/\0/g, '').replace(/\.\./g, '').replace(/[\/\\]/g, '_')
+                        if (decoded.length > 255) decoded = decoded.substring(0, 255)
+                        if (decoded.length > 0) {
+                            filename = decoded
+                        }
                     } catch (error) { }
                     break
                 }
@@ -163,7 +172,7 @@ export async function POST(request: NextRequest) {
                 'Location': location,
                 'Upload-Offset': '0',
                 'Tus-Resumable': '1.0.0',
-                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGIN || 'https://your-domain.com',
                 'Access-Control-Expose-Headers': 'Location, Upload-Offset, Tus-Resumable',
             },
         })

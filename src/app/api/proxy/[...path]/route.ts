@@ -1,11 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import authOptions from '@/app/api/auth/[...nextauth]/authOptions'
 
-const BACKEND_URL = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_BACKEND_API || 'http://patriotic-reena-choregraphically.ngrok-free.dev'
+// SECURITY: Require BACKEND_API_URL to be explicitly configured.
+// No hardcoded fallbacks — prevents accidental exposure of development tunnels.
+const BACKEND_URL = process.env.BACKEND_API_URL
+if (!BACKEND_URL) {
+  throw new Error('BACKEND_API_URL environment variable is not configured for the proxy route.')
+}
+
+// Enforce authentication on ALL proxy methods
+async function requireAuth(): Promise<NextResponse | null> {
+  const session = await getServerSession(authOptions)
+  if (!session) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  return null
+}
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
+  const authResponse = await requireAuth()
+  if (authResponse) return authResponse
   const { path } = await params
   return proxyRequest(request, path, 'GET')
 }
@@ -14,6 +32,8 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
+  const authResponse = await requireAuth()
+  if (authResponse) return authResponse
   const { path } = await params
   return proxyRequest(request, path, 'POST')
 }
@@ -22,6 +42,8 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
+  const authResponse = await requireAuth()
+  if (authResponse) return authResponse
   const { path } = await params
   return proxyRequest(request, path, 'PUT')
 }
@@ -30,6 +52,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
+  const authResponse = await requireAuth()
+  if (authResponse) return authResponse
   const { path } = await params
   return proxyRequest(request, path, 'PATCH')
 }
@@ -38,6 +62,8 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
+  const authResponse = await requireAuth()
+  if (authResponse) return authResponse
   const { path } = await params
   return proxyRequest(request, path, 'DELETE')
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { axiosClient } from '@/lib/api/axios-client'
+import useAxiosAuth from '@/lib/api/axios-auth'
 import { API_ENDPOINTS } from '@/lib/api/endpoints'
 import toast from 'react-hot-toast'
 import { Save, RotateCcw, Pencil, Check, X, Database, Cpu, FolderOutput, FolderInput } from 'lucide-react'
@@ -36,6 +36,7 @@ function groupBy<T>(arr: T[], key: keyof T): Record<string, T[]> {
 }
 
 export function PipelineConfigContent() {
+    const { axiosAuth: api } = useAxiosAuth()
     const [rows, setRows] = useState<ConfigRow[]>([])
     const [edits, setEdits] = useState<Record<string, string>>({})
     const [editing, setEditing] = useState<Set<string>>(new Set())
@@ -52,19 +53,19 @@ export function PipelineConfigContent() {
     const fetchConfig = useCallback(async () => {
         try {
             setIsLoading(true)
-            const res = await axiosClient.get<ConfigRow[]>(API_ENDPOINTS.JOBS.PIPELINE_CONFIG)
+            const res = await api.get<ConfigRow[]>(API_ENDPOINTS.JOBS.PIPELINE_CONFIG)
             setRows(res.data)
         } catch (e: any) {
             toast.error('Failed to load pipeline configuration.')
         } finally {
             setIsLoading(false)
         }
-    }, [])
+    }, [api])
 
     const fetchHlaConfig = useCallback(async () => {
         try {
             setIsHlaLoading(true)
-            const res = await axiosClient.get<ConfigRow[]>(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA)
+            const res = await api.get<ConfigRow[]>(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA)
             setHlaRows(res.data)
         } catch (e: any) {
             console.error('HLA config not available:', e)
@@ -72,7 +73,7 @@ export function PipelineConfigContent() {
         } finally {
             setIsHlaLoading(false)
         }
-    }, [])
+    }, [api])
 
     useEffect(() => { 
         fetchConfig()
@@ -97,15 +98,15 @@ export function PipelineConfigContent() {
         if (value === undefined) return
         setIsSaving(true)
         try {
-            const endpoint = key.startsWith('hla_') 
+            const endpoint = key.startsWith('hla_')
                 ? API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA 
                 : API_ENDPOINTS.JOBS.PIPELINE_CONFIG
             const parsedValue = key.startsWith('hla_') || key === 'neo_num_cores' ? parseInt(value) : value
-            const payload = key.startsWith('hla_') 
+            const payload = key.startsWith('hla_')
                 ? { key, threads: parsedValue }
                 : { key, value: parsedValue }
             console.log('Saving config:', { key, endpoint, payload })
-            await axiosClient.patch(endpoint, payload)
+            await api.patch(endpoint, payload)
             setRows(prev => prev.map(r => r.key === key ? { ...r, value } : r))
             cancelEdit(key)
             toast.success(`Saved: ${key}`)
@@ -127,19 +128,19 @@ export function PipelineConfigContent() {
         try {
             const hlaItems = allEdits.filter(item => item.isHla)
             const regularItems = allEdits.filter(item => !item.isHla)
-            
+
             const promises: Promise<any>[] = []
             regularItems.forEach(({ key, parsedValue }) => {
                 const payload = { key, value: parsedValue }
                 console.log('Saving regular config:', { endpoint: API_ENDPOINTS.JOBS.PIPELINE_CONFIG, payload })
-                promises.push(axiosClient.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG, payload))
+                promises.push(api.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG, payload))
             })
             hlaItems.forEach(({ key, parsedValue }) => {
                 const payload = { key, threads: parsedValue }
                 console.log('Saving HLA config:', { endpoint: API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload })
-                promises.push(axiosClient.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload))
+                promises.push(api.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload))
             })
-            
+
             await Promise.all(promises)
             setRows(prev => prev.map(r => edits[r.key] !== undefined ? { ...r, value: edits[r.key] } : r))
             setEditing(new Set())
@@ -181,7 +182,7 @@ export function PipelineConfigContent() {
             const parsedValue = key === 'hla_threads' ? parseInt(value) : value
             const payload = { key, threads: parsedValue }
             console.log('Saving HLA config:', { endpoint: API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload })
-            await axiosClient.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload)
+            await api.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload)
             setHlaRows(prev => prev.map(r => r.key === key ? { ...r, value } : r))
             cancelHlaEdit(key)
             toast.success(`Saved: ${key}`)
@@ -204,7 +205,7 @@ export function PipelineConfigContent() {
             const promises = hlaItems.map(({ key, parsedValue }) => {
                 const payload = { key, threads: parsedValue }
                 console.log('Saving HLA config:', { endpoint: API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload })
-                return axiosClient.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload)
+                return api.patch(API_ENDPOINTS.JOBS.PIPELINE_CONFIG_HLA, payload)
             })
             await Promise.all(promises)
             setHlaRows(prev => prev.map(r => hlaEdits[r.key] !== undefined ? { ...r, value: hlaEdits[r.key] } : r))

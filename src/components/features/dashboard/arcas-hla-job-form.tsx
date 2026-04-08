@@ -12,9 +12,14 @@ interface ArcasHlaFormData {
 }
 
 export function ArcasHlaJobForm() {
+  // SECURITY: Do NOT hardcode S3 bucket paths in frontend code.
+  // Use environment variables — these should be configured per deployment.
+  const defaultS3Input = process.env.NEXT_PUBLIC_DEFAULT_S3_INPUT_PATH || ''
+  const defaultS3Output = process.env.NEXT_PUBLIC_DEFAULT_S3_OUTPUT_PATH || ''
+
   const [formData, setFormData] = useState<ArcasHlaFormData>({
-    s3_input_prefix: 's3://epicode-neoantigen/pragnakalp_preprocessing_input/samples_5/',
-    s3_output_prefix: 's3://epicode-preprocessing-output/hla-output/',
+    s3_input_prefix: defaultS3Input,
+    s3_output_prefix: defaultS3Output,
     threads: 12,
     job_name: '',
   })
@@ -42,8 +47,8 @@ export function ArcasHlaJobForm() {
       )
 
       setFormData({
-        s3_input_prefix: 's3://epicode-neoantigen/pragnakalp_preprocessing_input/samples_5/',
-        s3_output_prefix: 's3://epicode-preprocessing-output/hla-output/',
+        s3_input_prefix: defaultS3Input,
+        s3_output_prefix: defaultS3Output,
         threads: 12,
         job_name: '',
       })
@@ -163,8 +168,8 @@ export function ArcasHlaJobForm() {
           onClick={() => {
             if (confirm('Are you sure you want to reset the form?')) {
               setFormData({
-                s3_input_prefix: 's3://epicode-neoantigen/pragnakalp_preprocessing_input/samples_5/',
-                s3_output_prefix: 's3://epicode-preprocessing-output/hla-output/',
+                s3_input_prefix: defaultS3Input,
+                s3_output_prefix: defaultS3Output,
                 threads: 12,
                 job_name: '',
               })

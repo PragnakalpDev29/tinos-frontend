@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { useJobStatusWebSocket } from '@/hooks/use-job-status-websocket'
 import { jobService, ArcasHlaJobData } from '@/lib/services/job.service'
-import { axiosClient } from '@/lib/api/axios-client'
+import axios from 'axios'
 
 interface JobData {
   id: number
@@ -108,7 +108,21 @@ export function JobDetailsContent({ jobId, jobType }: JobDetailsContentProps) {
   const fetchChildren = useCallback(async () => {
     if (jobType !== 'preprocessing') return
     try {
-      const res = await axiosClient.get(
+      // Create axios instance with session auth for this request
+      const api = axios.create({
+        baseURL: '/',
+        timeout: 30000,
+      })
+      
+      // Attach Bearer token from session
+      const { getSession } = await import('next-auth/react')
+      const session = await getSession()
+      const token = (session as any)?.access || session?.user?.access
+      if (token) {
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`
+      }
+      
+      const res = await api.get(
         `/proxy/api/submit-preprocessing/${jobId}/children/`
       )
       setChildren(res.data)
