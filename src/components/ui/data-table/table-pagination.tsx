@@ -57,11 +57,11 @@ export function TablePagination({
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
       {onPageSizeChange && (
         <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-600">Rows per page:</span>
+          <span className="text-sm text-[#08333D]">Rows per page:</span>
           <select
             value={pageSize}
             onChange={(e) => onPageSizeChange(Number(e.target.value))}
-            className="px-3 py-1.5 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="px-3 py-1.5 border border-[#90BCC5]/50 rounded-lg bg-white/50 text-[#08333D] backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
           >
             {pageSizeOptions.map((size) => (
               <option key={size} value={size}>
@@ -72,64 +72,66 @@ export function TablePagination({
         </div>
       )}
 
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => onPageChange(1)}
-          disabled={currentPage === 1}
-          className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          aria-label="First page"
-        >
-          <ChevronsLeft className="w-4 h-4" />
-        </button>
-        
-        <button
-          onClick={() => onPageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-          className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          aria-label="Previous page"
-        >
-          <ChevronLeft className="w-4 h-4" />
-        </button>
+      {totalPages > 1 && (
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => onPageChange(1)}
+            disabled={currentPage === 1}
+            className="p-2 rounded-lg border border-[#90BCC5]/50 text-[#08333D] hover:bg-white/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="First page"
+          >
+            <ChevronsLeft className="w-4 h-4" />
+          </button>
 
-        <div className="flex items-center gap-1">
-          {pageNumbers.map((page, index) => (
-            <React.Fragment key={index}>
-              {page === '...' ? (
-                <span className="px-3 py-1.5 text-slate-400">...</span>
-              ) : (
-                <button
-                  onClick={() => onPageChange(page as number)}
-                  className={`min-w-[40px] px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    page === currentPage
-                      ? 'bg-teal-600 text-white'
-                      : 'border border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {page}
-                </button>
-              )}
-            </React.Fragment>
-          ))}
+          <button
+            onClick={() => onPageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className="p-2 rounded-lg border border-[#90BCC5]/50 text-[#08333D] hover:bg-white/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Previous page"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+
+          <div className="flex items-center gap-1">
+            {pageNumbers.map((page, index) => (
+              <React.Fragment key={index}>
+                {page === '...' ? (
+                  <span className="px-3 py-1.5 text-[#08333D]">...</span>
+                ) : (
+                  <button
+                    onClick={() => onPageChange(page as number)}
+                    className={`min-w-[40px] px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                      page === currentPage
+                        ? 'bg-[#466f78] text-white'
+                        : 'border border-[#90BCC5]/50 text-[#08333D] hover:bg-white/50'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )}
+              </React.Fragment>
+            ))}
+          </div>
+
+          <button
+            onClick={() => onPageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-lg border border-[#90BCC5]/50 text-[#08333D] hover:bg-white/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Next page"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={() => onPageChange(totalPages)}
+            disabled={currentPage === totalPages}
+            className="p-2 rounded-lg border border-[#90BCC5]/50 text-[#08333D] hover:bg-white/50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Last page"
+          >
+            <ChevronsRight className="w-4 h-4" />
+          </button>
         </div>
-
-        <button
-          onClick={() => onPageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-          className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          aria-label="Next page"
-        >
-          <ChevronRight className="w-4 h-4" />
-        </button>
-        
-        <button
-          onClick={() => onPageChange(totalPages)}
-          disabled={currentPage === totalPages}
-          className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          aria-label="Last page"
-        >
-          <ChevronsRight className="w-4 h-4" />
-        </button>
-      </div>
+      )}
     </div>
   )
 }

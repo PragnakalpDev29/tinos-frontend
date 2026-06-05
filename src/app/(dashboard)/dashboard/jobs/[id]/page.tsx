@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from 'next/navigation'
 import { JobDetailsContent } from '@/components/features/dashboard/job-details-content'
 
 // SECURITY: Allowlist of valid job types to prevent injection via URL parameters
-const ALLOWED_JOB_TYPES = ['preprocessing', 'neoantigen', 'arcas-hla'] as const
+const ALLOWED_JOB_TYPES = ['preprocessing', 'neoantigen', 'arcas-hla', 'm6a'] as const
 type JobType = typeof ALLOWED_JOB_TYPES[number]
 
 function validateJobType(raw: string | null): JobType {

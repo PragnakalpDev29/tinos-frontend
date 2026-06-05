@@ -16,7 +16,7 @@ export function Text({
   const variantStyles = {
     default: '',
     bold: 'font-bold',
-    muted: 'text-slate-500',
+    muted: 'text-[#466F78]',
   }
 
   return (

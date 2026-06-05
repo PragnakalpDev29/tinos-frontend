@@ -1,16 +1,11 @@
 import { S3Client, UploadPartCommand, CompleteMultipartUploadCommand, AbortMultipartUploadCommand, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
+import { TUS_CHUNK_SIZE_BYTES } from '@/lib/constants/tus-upload'
 
 const AWS_REGION = process.env.AWS_REGION || ''
-const ACCESS_KEY = process.env.ACCESS_KEY || ''
-const SECRET_KEY = process.env.SECRET_KEY || ''
 const BUCKET_NAME = process.env.BUCKET_NAME || 'epicode-neoantigen'
 
 export const s3Client = new S3Client({
     region: AWS_REGION,
-    credentials: {
-        accessKeyId: ACCESS_KEY,
-        secretAccessKey: SECRET_KEY,
-    },
 })
 
 // Use globalThis to persist across API calls in development/production
@@ -19,7 +14,11 @@ declare global {
         uploadId: string
         key: string
         size: number
+        ownerUserId?: string
+        ownerEmail?: string
         parts: Array<{ partNumber: number; etag: string }>
+        /** Bytes acknowledged after last successful PATCH (for accurate Tus HEAD / resume). */
+        uploadedByteOffset?: number
         createdAt: number
         completed?: boolean
         completedAt?: number
@@ -30,7 +29,10 @@ export const uploadStore = globalThis.tusUploadStore || new Map<string, {
     uploadId: string
     key: string
     size: number
+    ownerUserId?: string
+    ownerEmail?: string
     parts: Array<{ partNumber: number; etag: string }>
+    uploadedByteOffset?: number
     createdAt: number
     completed?: boolean
     completedAt?: number
@@ -48,7 +50,10 @@ export async function saveUploadMetadata(id: string, metadata: {
     uploadId: string
     key: string
     size: number
+    ownerUserId?: string
+    ownerEmail?: string
     parts: Array<{ partNumber: number; etag: string }>
+    uploadedByteOffset?: number
     createdAt: number
     completed?: boolean
     completedAt?: number
@@ -68,7 +73,11 @@ export async function saveUploadMetadata(id: string, metadata: {
 
         await s3Client.send(command)
     } catch (error) {
-        console.error('Failed to save upload metadata:', error)
+        if (process.env.NODE_ENV !== 'production') {
+            console.error('Failed to save upload metadata:', error)
+        } else {
+            console.error('Failed to save upload metadata')
+        }
         // Don't throw - in-memory store still works
     }
 }
@@ -97,7 +106,11 @@ export async function getUploadMetadata(id: string) {
             }
         } catch (error) {
             // Metadata not found in S3
-            console.error('Failed to load upload metadata from S3:', error)
+            if (process.env.NODE_ENV !== 'production') {
+                console.error('Failed to load upload metadata from S3:', error)
+            } else {
+                console.error('Failed to load upload metadata from S3')
+            }
         }
     }
 
@@ -117,7 +130,11 @@ export async function deleteUploadMetadata(id: string) {
 
         await s3Client.send(command)
     } catch (error) {
-        console.error('Failed to delete upload metadata:', error)
+        if (process.env.NODE_ENV !== 'production') {
+            console.error('Failed to delete upload metadata:', error)
+        } else {
+            console.error('Failed to delete upload metadata')
+        }
     }
 }
 
@@ -154,4 +171,5 @@ export function cleanOldUploads() {
     }
 }
 
-export const CHUNK_SIZE = 4 * 1024 * 1024 // 4MB chunks
+/** Must match `chunkSize` in tus-js-client (`TUS_CHUNK_SIZE_BYTES`). */
+export const CHUNK_SIZE = TUS_CHUNK_SIZE_BYTES

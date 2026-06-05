@@ -163,8 +163,8 @@ Live top-row sample:
     "s3_effective_output_prefix": "s3://epicode-neoantigen/pragnakalp_preprocessing_output/jobs/newmerged_20260324-053035/hla_output/3dfa5df8-319d-4dbb-a4b7-2b8a1e145895/",
     "threads": 12,
     "file_count": 4,
-    "job_queue": "dhyanesh-test-queue",
-    "job_definition": "dhyanesh-test-job",
+    "job_queue": "arcas-hla-queue",
+    "job_definition": "arcas-hla-job-def",
     "status": "RUNNING",
     "failure_reason": null
   },
@@ -206,12 +206,12 @@ Expected item (trimmed):
     "job_name": "arcas-epicode-preprocessing-newmerged_20260324-053035",
     "status": "RUNNING",
     "s3_input_prefix": "s3://.../samples_5/",
-    "s3_output_prefix": "s3://.../dhyanesh-test/",
-    "s3_effective_output_prefix": "s3://.../dhyanesh-test/3dfa5df8-.../",
+    "s3_output_prefix": "s3://.../arcas-hla-runs/",
+    "s3_effective_output_prefix": "s3://.../arcas-hla-runs/3dfa5df8-.../",
     "threads": 12,
     "file_count": 5,
-    "job_queue": "dhyanesh-test-queue",
-    "job_definition": "dhyanesh-test-job",
+    "job_queue": "arcas-hla-queue",
+    "job_definition": "arcas-hla-job-def",
     "failure_reason": null
   }
 }
@@ -248,8 +248,8 @@ Expected response (trimmed):
     "status": "RUNNING",
     "type": "ArcasHLA",
     "s3_input_prefix": "s3://.../samples_5/",
-    "s3_output_prefix": "s3://.../dhyanesh-test/",
-    "s3_effective_output_prefix": "s3://.../dhyanesh-test/3dfa5df8-.../",
+    "s3_output_prefix": "s3://.../arcas-hla-runs/",
+    "s3_effective_output_prefix": "s3://.../arcas-hla-runs/3dfa5df8-.../",
     "threads": 12,
     "file_count": 5,
     "failure_reason": null
@@ -285,7 +285,7 @@ Request:
 ```json
 {
   "s3_input_prefix": "s3://epicode-neoantigen/pragnakalp_preprocessing_input/samples_5/",
-  "s3_output_prefix": "s3://epicode-preprocessing-output/dhyanesh-test/",
+  "s3_output_prefix": "s3://epicode-preprocessing-output/arcas-hla-runs/",
   "threads": 12,
   "job_name": "arcas-hla-samples_10"
 }
@@ -300,18 +300,18 @@ Expected response:
   "threads": 12,
   "fileCount": 5,
   "s3_input_prefix": "s3://.../samples_5/",
-  "s3_output_prefix": "s3://.../dhyanesh-test/",
-  "s3_effective_output_prefix": "s3://.../dhyanesh-test/4bc5b9ae-.../",
+  "s3_output_prefix": "s3://.../arcas-hla-runs/",
+  "s3_effective_output_prefix": "s3://.../arcas-hla-runs/4bc5b9ae-.../",
   "arcasHla": {
     "batch_job_id": "4bc5b9ae-71a4-48d6-994c-126c36af22ca",
     "status": "SUBMITTED",
     "s3_input_prefix": "s3://.../samples_5/",
-    "s3_output_prefix": "s3://.../dhyanesh-test/",
-    "s3_effective_output_prefix": "s3://.../dhyanesh-test/4bc5b9ae-.../",
+    "s3_output_prefix": "s3://.../arcas-hla-runs/",
+    "s3_effective_output_prefix": "s3://.../arcas-hla-runs/4bc5b9ae-.../",
     "threads": 12,
     "file_count": 5,
-    "job_queue": "dhyanesh-test-queue",
-    "job_definition": "dhyanesh-test-job",
+    "job_queue": "arcas-hla-queue",
+    "job_definition": "arcas-hla-job-def",
     "failure_reason": null
   }
 }

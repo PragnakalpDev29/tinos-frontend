@@ -17,8 +17,8 @@ interface ConfigRow {
 }
 
 const STAGE_META: Record<string, { label: string; color: string; bg: string; border: string }> = {
-    stage1: { label: 'Stage 1 — Preprocessing', color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-200' },
-    stage2: { label: 'Stage 2 — Neoantigen Discovery', color: 'text-purple-700', bg: 'bg-purple-50', border: 'border-purple-200' },
+    stage1: { label: 'Stage 1 — Preprocessing', color: 'text-[#08333D]', bg: 'bg-white/50', border: 'border-slate-400/70' },
+    stage2: { label: 'Stage 2 — Neoantigen Discovery', color: 'text-purple-800', bg: 'bg-purple-50/40', border: 'border-purple-300' },
 }
 
 const CATEGORY_ICON: Record<string, React.ReactNode> = {
@@ -233,11 +233,11 @@ export function PipelineConfigContent() {
         <div className="space-y-8 max-w-5xl mx-auto">
             <div className="flex items-start justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold text-slate-900 flex items-center gap-3">
-                        <Database className="w-7 h-7 text-teal-600" />
+                    <h1 className="text-3xl font-bold text-[#08333D] flex items-center gap-3">
+                        <Database className="w-7 h-7 text-[#08333D]" />
                         Pipeline Configuration
                     </h1>
-                    <p className="text-slate-500 mt-1.5 text-sm">
+                    <p className="text-[#08333D] mt-1.5 text-sm">
                         Edit the default S3 paths and compute settings used by each stage of the pipeline.
                         Changes are saved to the database and take effect on the <strong>next</strong> job submission.
                     </p>
@@ -246,7 +246,7 @@ export function PipelineConfigContent() {
                     {hasChanges && (
                         <button
                             onClick={resetAll}
-                            className="flex items-center gap-2 px-4 py-2 border border-slate-300 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors text-sm font-medium"
+                            className="flex items-center gap-2 px-4 py-2 border border-[#466F78]/40 rounded-lg text-[#08333D] hover:bg-[#466F78]/20 transition-colors text-sm font-medium"
                         >
                             <RotateCcw className="w-4 h-4" /> Discard All
                         </button>
@@ -263,28 +263,28 @@ export function PipelineConfigContent() {
             </div>
 
             {isLoading ? (
-                <div className="text-center py-24 text-slate-400 text-sm">Loading configuration…</div>
+                <div className="text-center py-24 text-[#08333D] text-sm">Loading configuration…</div>
             ) : (
                 Object.entries(byStage).map(([stage, stageRows]) => {
-                    const meta = STAGE_META[stage] || { label: stage, color: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-200' }
+                    const meta = STAGE_META[stage] || { label: stage, color: 'text-[#08333D]', bg: 'bg-white/50', border: 'border-slate-400/70' }
                     const byCategory = groupBy(stageRows, 'category')
 
                     return (
                         <div key={stage} className={`rounded-xl border ${meta.border} overflow-hidden shadow-sm`}>
-                            <div className={`${meta.bg} px-6 py-4 flex items-center gap-3 border-b ${meta.border}`}>
+                            <div className={`${meta.bg} px-6 py-4 flex items-center gap-3 border-b border-slate-400/70`}>
                                 <div className={`text-lg font-bold ${meta.color}`}>{meta.label}</div>
                             </div>
 
                             {Object.entries(byCategory).map(([category, catRows]) => (
                                 <div key={category}>
-                                    <div className="bg-white border-b border-slate-100 px-6 py-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
+                                    <div className="bg-white/75 border-b border-slate-400/60 px-6 py-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#08333D]">
                                         {CATEGORY_ICON[category] ?? <Database className="w-4 h-4" />}
                                         {category}
                                     </div>
 
-                                    <table className="w-full text-sm bg-white">
+                                    <table className="w-full text-sm bg-transparent">
                                         <thead>
-                                            <tr className="border-b border-slate-100 text-xs text-slate-400 uppercase tracking-wider">
+                                            <tr className="border-b-2 border-slate-400/70 text-xs text-[#08333D] uppercase tracking-wider">
                                                 <th className="text-left px-6 py-2 font-semibold w-52">Parameter</th>
                                                 <th className="text-left px-4 py-2 font-semibold">Value</th>
                                                 <th className="text-left px-4 py-2 font-semibold w-40">Last Updated</th>
@@ -294,15 +294,14 @@ export function PipelineConfigContent() {
                                         <tbody>
                                             {catRows.map((row, i) => {
                                                 const isEdit = editing.has(row.key)
-                                                const isDirty = edits[row.key] !== undefined && edits[row.key] !== row.value
                                                 return (
                                                     <tr
                                                         key={row.key}
-                                                        className={`border-b border-slate-50 transition-colors ${isEdit ? 'bg-amber-50/40' : i % 2 === 0 ? 'bg-white' : 'bg-slate-50/40'}`}
+                                                        className={`border-b border-slate-300/80 transition-colors ${isEdit ? 'bg-amber-400/20' : i % 2 === 0 ? 'bg-white/65' : 'bg-white/50'}`}
                                                     >
                                                         <td className="px-6 py-3 align-top">
-                                                            <div className="font-semibold text-slate-700">{row.label}</div>
-                                                            <div className="text-[10px] text-slate-400 font-mono mt-0.5">{row.key}</div>
+                                                            <div className="font-semibold text-[#08333D]">{row.label}</div>
+                                                            <div className="text-[10px] text-[#08333D] font-mono mt-0.5">{row.key}</div>
                                                         </td>
 
                                                         <td className="px-4 py-3 align-top">
@@ -315,7 +314,7 @@ export function PipelineConfigContent() {
                                                                         max={row.key.startsWith('hla_') ? 100 : undefined}
                                                                         value={edits[row.key] ?? row.value}
                                                                         onChange={e => handleChange(row.key, e.target.value)}
-                                                                        className={`w-full px-3 py-1.5 border-2 rounded-lg font-mono text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white ${
+                                                                        className={`w-full px-3 py-1.5 border-2 rounded-lg font-mono text-xs focus:outline-none focus:ring-2 focus:ring-teal-500 bg-white/50 ${
                                                                             (row.key === 'neo_num_cores' && parseInt(edits[row.key] ?? row.value) > 300) ||
                                                                             (row.key.startsWith('hla_') && (parseInt(edits[row.key] ?? row.value) < 1 || parseInt(edits[row.key] ?? row.value) > 100)) ||
                                                                             (!row.key.startsWith('hla_') && row.key !== 'neo_num_cores' && (edits[row.key] ?? row.value).trim() && !(edits[row.key] ?? row.value).trim().toLowerCase().startsWith('s3://'))
@@ -340,11 +339,11 @@ export function PipelineConfigContent() {
                                                                     )}
                                                                 </div>
                                                             ) : (
-                                                                <span className="font-mono text-xs text-slate-600 break-all">{row.value}</span>
+                                                                <span className="font-mono text-xs text-[#08333D] break-all">{row.value}</span>
                                                             )}
                                                         </td>
 
-                                                        <td className="px-4 py-3 align-top text-xs text-slate-400 whitespace-nowrap">
+                                                        <td className="px-4 py-3 align-top text-xs text-[#08333D] whitespace-nowrap">
                                                             {new Date(row.updated_at).toLocaleDateString('en-US', {
                                                                 month: 'short', day: 'numeric', year: 'numeric',
                                                                 hour: '2-digit', minute: '2-digit'
@@ -366,7 +365,7 @@ export function PipelineConfigContent() {
                                                                         <button
                                                                             onClick={() => cancelEdit(row.key)}
                                                                             title="Cancel"
-                                                                            className="p-1.5 rounded-lg border border-slate-300 text-slate-500 hover:bg-slate-100 transition-colors"
+                                                                            className="p-1.5 rounded-lg border border-slate-400/70 text-[#08333D] hover:bg-[#466F78]/20 transition-colors"
                                                                         >
                                                                             <X className="w-3.5 h-3.5" />
                                                                         </button>
@@ -375,7 +374,7 @@ export function PipelineConfigContent() {
                                                                     <button
                                                                         onClick={() => startEdit(row.key, row.value)}
                                                                         title="Edit"
-                                                                        className="p-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
+                                                                        className="p-1.5 rounded-lg border border-slate-400/70 text-[#08333D] hover:bg-[#466F78]/20 hover:text-[#08333D] transition-colors"
                                                                     >
                                                                         <Pencil className="w-3.5 h-3.5" />
                                                                     </button>
@@ -397,15 +396,15 @@ export function PipelineConfigContent() {
             {/* HLA Configuration Section - Different Table Design */}
             {!isHlaLoading && hlaRows.length > 0 && (
                 <>
-                    <div className="flex items-start justify-between mt-12 pt-8 border-t-4 border-emerald-200">
+                    <div className="flex items-start justify-between mt-12 pt-8 border-t-4 border-[#466F78]">
                         <div>
-                            <h2 className="text-2xl font-bold text-emerald-800 flex items-center gap-3">
-                                <svg className="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <h2 className="text-2xl font-bold text-[#08333D] flex items-center gap-3">
+                                <svg className="w-7 h-7 text-[#08333D]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                                 </svg>
                                 arcasHLA Configuration
                             </h2>
-                            <p className="text-emerald-600 mt-1.5 text-sm font-medium">
+                            <p className="text-[#08333D] mt-1.5 text-sm font-medium">
                                 Stage 1.5 — HLA Typing Pipeline Settings
                             </p>
                         </div>
@@ -413,7 +412,7 @@ export function PipelineConfigContent() {
                             {hlaEditing.size > 0 && (
                                 <button
                                     onClick={resetHlaAll}
-                                    className="flex items-center gap-2 px-4 py-2 border-2 border-emerald-300 rounded-lg text-emerald-700 hover:bg-emerald-50 transition-colors text-sm font-semibold"
+                                    className="flex items-center gap-2 px-4 py-2 border-2 border-emerald-300 rounded-lg text-[#08333D] hover:bg-emerald-50 transition-colors text-sm font-semibold"
                                 >
                                     <RotateCcw className="w-4 h-4" /> Discard
                                 </button>
@@ -439,17 +438,17 @@ export function PipelineConfigContent() {
                                     className={`rounded-xl border-2 overflow-hidden transition-all ${
                                         isEdit 
                                             ? 'border-amber-400 bg-amber-50/30 shadow-lg' 
-                                            : 'border-emerald-200 bg-white hover:border-emerald-300 hover:shadow-md'
+                                            : 'border-[#466F78]/40 bg-white/50 hover:border-emerald-400 hover:shadow-md backdrop-blur-sm'
                                     }`}
                                 >
-                                    <div className="bg-gradient-to-r from-emerald-50 to-emerald-100/50 px-6 py-3 border-b-2 border-emerald-200">
+                                    <div className="bg-gradient-to-r from-emerald-50 to-emerald-100/50 px-6 py-3 border-b-2 border-[#466F78]">
                                         <div className="flex items-center justify-between">
                                             <div>
                                                 <h3 className="font-bold text-emerald-900 text-base">{row.label || row.key}</h3>
-                                                <p className="text-xs text-emerald-600 font-mono mt-0.5">{row.key}</p>
+                                                <p className="text-xs text-[#08333D] font-mono mt-0.5">{row.key}</p>
                                             </div>
                                             <div className="flex items-center gap-2">
-                                                <span className="text-xs text-emerald-600 font-medium">
+                                                <span className="text-xs text-[#08333D] font-medium">
                                                     {new Date(row.updated_at).toLocaleDateString('en-US', {
                                                         month: 'short', day: 'numeric', year: 'numeric'
                                                     })}
@@ -467,7 +466,7 @@ export function PipelineConfigContent() {
                                                         <button
                                                             onClick={() => cancelHlaEdit(row.key)}
                                                             title="Cancel"
-                                                            className="p-2 rounded-lg border-2 border-slate-300 text-slate-600 hover:bg-slate-100 transition-colors"
+                                                            className="p-2 rounded-lg border-2 border-slate-400/70 text-[#08333D] hover:bg-[#466F78]/20 transition-colors"
                                                         >
                                                             <X className="w-4 h-4" />
                                                         </button>
@@ -476,7 +475,7 @@ export function PipelineConfigContent() {
                                                     <button
                                                         onClick={() => startHlaEdit(row.key, row.value)}
                                                         title="Edit"
-                                                        className="p-2 rounded-lg border-2 border-emerald-300 text-emerald-600 hover:bg-emerald-50 transition-colors"
+                                                        className="p-2 rounded-lg border-2 border-emerald-300 text-[#08333D] hover:bg-emerald-50 transition-colors"
                                                     >
                                                         <Pencil className="w-4 h-4" />
                                                     </button>
@@ -488,7 +487,7 @@ export function PipelineConfigContent() {
                                     <div className="px-6 py-4">
                                         {isEdit ? (
                                             <div className="space-y-2">
-                                                <label className="block text-xs font-bold text-emerald-700 uppercase tracking-wider">
+                                                <label className="block text-xs font-bold text-[#08333D] uppercase tracking-wider">
                                                     {row.key === 'hla_threads' ? 'Thread Count (1-100)' : 'Configuration Value'}
                                                 </label>
                                                 <input
@@ -517,10 +516,10 @@ export function PipelineConfigContent() {
                                             </div>
                                         ) : (
                                             <div>
-                                                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                                                <label className="block text-xs font-semibold text-[#08333D] uppercase tracking-wider mb-2">
                                                     Current Value
                                                 </label>
-                                                <div className="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-3">
+                                                <div className="bg-emerald-50 border border-[#466F78] rounded-lg px-4 py-3">
                                                     <span className="font-mono text-sm text-emerald-900 font-semibold break-all">
                                                         {row.value}
                                                     </span>

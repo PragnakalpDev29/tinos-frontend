@@ -50,7 +50,14 @@ const authOptions: AuthOptions = {
 
           return response.data
         } catch (error: any) {
-          console.error('Login API Error:', error.response?.data || error.message)
+          if (process.env.NODE_ENV !== 'production') {
+            console.error('Login API Error:', {
+              status: error?.response?.status,
+              code: error?.code,
+            })
+          } else {
+            console.error('Login API Error')
+          }
           throw new Error(error.response?.data?.error || 'Invalid credentials')
         }
       },

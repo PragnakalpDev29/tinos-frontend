@@ -27,14 +27,14 @@ export function RegisterForm() {
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true)
     // console.log('Registration form submitted with data:', data)
-    
+
     try {
       // console.log('Calling authService.register...')
       const response = await authService.register(data)
       // console.log('Registration response:', response)
-      
+
       toast.success('Account created successfully! Redirecting to dashboard...')
-      
+
       setTimeout(() => {
         router.push('/dashboard')
       }, 1500)
@@ -58,14 +58,32 @@ export function RegisterForm() {
     }
   }
 
+  const isRegistrationEnabled = process.env.NEXT_PUBLIC_ALLOW_REGISTRATION !== 'false'
+
+  if (!isRegistrationEnabled) {
+    return (
+      <div className="w-full max-w-2xl text-center">
+        <div className="bg-slate-950/95 rounded-[3rem] p-12 shadow-2xl border border-slate-800/70 text-slate-100">
+          <h1 className="text-3xl font-serif font-bold mb-6">Registration Closed</h1>
+          <p className="text-slate-400 mb-10 text-lg">
+            New user registrations are currently disabled. Please contact the administrator for access.
+          </p>
+          <Link href="/login" className="inline-block text-[#08333D] px-10 py-4 rounded-full font-bold text-lg transition-all shadow-lg brand-btn" target="_self">
+            Back to Login
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="w-full max-w-2xl">
-      <div className="bg-white rounded-[3rem] p-12 shadow-2xl border border-slate-100">
+      <div className="bg-slate-950/95 rounded-[3rem] p-12 shadow-2xl border border-slate-800/70 text-slate-100">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-serif font-bold mb-2">Create Your Account</h1>
-          {/* <p className="text-slate-500">Join TINOS and get access to quality healthcare</p> */}
+          {/* <p className="text-slate-400">Join TINOS and get access to quality healthcare</p> */}
         </div>
-        
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div>
             <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">
@@ -73,7 +91,7 @@ export function RegisterForm() {
             </label>
             <Input
               {...register('name')}
-              className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-teal-500 transition-all"
+              className="w-full bg-slate-900 text-slate-100 placeholder-slate-500 border border-slate-800 rounded-2xl px-6 py-4 focus:ring-2 focus:ring-teal-500 transition-all"
               type="text"
               placeholder="John Doe"
             />
@@ -81,14 +99,14 @@ export function RegisterForm() {
               <p className="text-red-500 text-xs mt-2">{errors.name.message}</p>
             )}
           </div>
-          
+
           <div>
             <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">
               Email Address
             </label>
             <Input
               {...register('email')}
-              className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-teal-500 transition-all"
+              className="w-full bg-slate-900 text-slate-100 placeholder-slate-500 border border-slate-800 rounded-2xl px-6 py-4 focus:ring-2 focus:ring-teal-500 transition-all"
               type="email"
               placeholder="name@example.com"
             />
@@ -96,14 +114,14 @@ export function RegisterForm() {
               <p className="text-red-500 text-xs mt-2">{errors.email.message}</p>
             )}
           </div>
-          
+
           <div>
             <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">
               Password
             </label>
             <Input
               {...register('password')}
-              className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-teal-500 transition-all"
+              className="w-full bg-slate-900 text-slate-100 placeholder-slate-500 border border-slate-800 rounded-2xl px-6 py-4 focus:ring-2 focus:ring-teal-500 transition-all"
               type="password"
               placeholder="••••••••"
             />
@@ -113,14 +131,14 @@ export function RegisterForm() {
               <p className="text-xs text-slate-400 mt-2">Must be at least 8 characters</p>
             )}
           </div>
-          
+
           <div>
             <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-2">
               Confirm Password
             </label>
             <Input
               {...register('password_confirm')}
-              className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-teal-500 transition-all"
+              className="w-full bg-slate-900 text-slate-100 placeholder-slate-500 border border-slate-800 rounded-2xl px-6 py-4 focus:ring-2 focus:ring-teal-500 transition-all"
               type="password"
               placeholder="••••••••"
             />
@@ -128,7 +146,7 @@ export function RegisterForm() {
               <p className="text-red-500 text-xs mt-2">{errors.password_confirm.message}</p>
             )}
           </div>
-          
+
           {/* <div className="bg-slate-50 rounded-2xl p-6 space-y-3">
             <div className="flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-teal-600 flex-shrink-0 mt-0.5" />
@@ -143,20 +161,21 @@ export function RegisterForm() {
               <p className="text-sm text-slate-600">24/7 access to your account</p>
             </div>
           </div> */}
-          
+
           <Button
-            className="w-full bg-teal-600 text-white py-5 rounded-full font-bold text-lg hover:bg-teal-700 transition-all shadow-xl shadow-teal-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            variant="brand"
+            className="w-full text-[#08333D] py-5 rounded-full font-bold text-lg transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed brand-btn"
             type="submit"
             disabled={isLoading || isSubmitting}
           >
             {isLoading || isSubmitting ? 'Creating Account...' : 'Create Account'}
           </Button>
         </form>
-        
-        <div className="mt-10 pt-10 border-t border-slate-100 text-center">
-          <p className="text-slate-500">
+
+        <div className="mt-10 pt-10 border-t border-slate-800/70 text-center">
+          <p className="text-slate-400">
             Already have an account?{' '}
-            <Link className="text-teal-600 font-bold hover:underline" href="/login">
+            <Link className="text-teal-200 font-bold hover:text-[#08333D] hover:underline" href="/login">
               Sign In
             </Link>
           </p>

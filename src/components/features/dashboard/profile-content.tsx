@@ -43,8 +43,8 @@ export function ProfileContent({ user, isLoading, onUserUpdate }: ProfileContent
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold text-slate-900">Profile</h1>
-        <p className="text-slate-600 mt-2">Manage your personal information</p>
+        <h1 className="text-3xl font-bold text-[#08333D]">Profile</h1>
+        <p className="text-[#466F78] mt-2">Manage your personal information</p>
       </div>
 
       <UserProfileCard user={user} isLoading={isLoading} />
@@ -58,37 +58,37 @@ export function ProfileContent({ user, isLoading, onUserUpdate }: ProfileContent
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">
+                <label className="block text-sm font-semibold text-[#08333D] mb-2">
                   Full Name
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  className="w-full px-4 py-3 border border-[#90BCC5]/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
                   disabled={isLoading}
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">
+                <label className="block text-sm font-semibold text-[#08333D] mb-2">
                   Email Address
                 </label>
                 <input
                   type="email"
                   value={user?.email || ''}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-slate-50"
+                  className="w-full px-4 py-3 border border-[#90BCC5]/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 bg-[#08333D]/40"
                   disabled
                 />
-                <p className="text-xs text-slate-500 mt-1">Email cannot be changed</p>
+                <p className="text-xs text-[#466F78] mt-1">Email cannot be changed</p>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-900 mb-2">
+                <label className="block text-sm font-semibold text-[#08333D] mb-2">
                   Member Since
                 </label>
                 <input
                   type="text"
                   value={user?.date_joined ? new Date(user.date_joined).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : ''}
-                  className="w-full px-4 py-3 border border-slate-300 rounded-lg bg-slate-50"
+                  className="w-full px-4 py-3 border border-[#90BCC5]/50 rounded-lg bg-[#08333D]/40"
                   disabled
                 />
               </div>
@@ -104,7 +104,7 @@ export function ProfileContent({ user, isLoading, onUserUpdate }: ProfileContent
                   type="button"
                   onClick={() => setName(user?.name || '')}
                   disabled={isLoading || isSaving}
-                  className="px-6 py-3 border-2 border-slate-300 text-slate-700 rounded-full font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-3 border-2 border-[#90BCC5]/50 text-[#08333D] rounded-full font-semibold hover:bg-[#08333D]/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancel
                 </button>
@@ -120,20 +120,20 @@ export function ProfileContent({ user, isLoading, onUserUpdate }: ProfileContent
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
-                <span className="text-sm font-semibold text-slate-900">Status</span>
+              <div className="flex items-center justify-between p-4 bg-green-900/30 rounded-lg">
+                <span className="text-sm font-semibold text-[#08333D]">Status</span>
                 <span className={`px-3 py-1 text-xs font-semibold rounded-full ${isLoading
-                    ? 'bg-slate-100 text-slate-500'
+                    ? 'bg-white/20 text-[#466F78]'
                     : user?.is_active !== false
-                      ? 'bg-green-100 text-green-700'
+                      ? 'bg-green-900 text-green-400'
                       : 'bg-red-100 text-red-700'
                   }`}>
                   {isLoading ? '...' : user?.is_active !== false ? 'Active' : 'Inactive'}
                 </span>
               </div>
-              <div className="p-4 bg-slate-50 rounded-lg">
-                <p className="text-sm font-semibold text-slate-900 mb-1">User ID</p>
-                <p className="text-xs text-slate-600 font-mono">{user?.id || 'Loading...'}</p>
+              <div className="p-4 bg-[#08333D]/40 rounded-lg">
+                <p className="text-sm font-semibold text-[#08333D] mb-1">User ID</p>
+                <p className="text-xs text-[#466F78] font-mono">{user?.id || 'Loading...'}</p>
               </div>
             </div>
           </CardContent>

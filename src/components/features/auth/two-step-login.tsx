@@ -54,9 +54,17 @@ export function TwoStepLogin() {
       } else if (response?.ok) {
         toast.success('Login successful!')
 
-        // Use window.location.href instead of router.push to ensure 
-        // a full page load so the Proxy/Middleware gets the new cookie correctly.
-        window.location.href = '/dashboard'
+        // Previously this did `window.location.href = '/dashboard'` for a full
+        // page reload so the middleware would see the fresh cookie. That
+        // reload also nuked any in-memory state (e.g. in-flight tus uploads
+        // that were paused during sign-out).
+        //
+        // router.refresh() re-runs server components and middleware with the
+        // now-present cookies without destroying the JS context, so Zustand
+        // stores survive the logout -> login round trip and the dashboard
+        // sidebar's mount effect can call resumeAll() on paused uploads.
+        router.replace('/dashboard')
+        router.refresh()
       }
     } catch (error: unknown) {
       const apiError = handleApiError(error, false)
@@ -80,10 +88,10 @@ export function TwoStepLogin() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="bg-white rounded-[3rem] p-12 shadow-2xl border border-slate-100">
+      <div className="bg-slate-950/95 rounded-[3rem] p-12 shadow-2xl border border-slate-800/70 text-slate-100">
         <div className="text-center mb-10">
-          <h1 className="text-3xl font-serif font-bold mb-2">Welcome Back</h1>
-          <p className="text-slate-500">Sign in to access your dashboard.</p>
+          <h1 className="text-3xl font-serif font-bold mb-2 text-slate-100">Welcome Back</h1>
+          <p className="text-slate-400">Sign in to access your dashboard.</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -93,7 +101,7 @@ export function TwoStepLogin() {
             </label>
             <Input
               {...register('email')}
-              className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-teal-500 transition-all"
+              className="w-full bg-slate-900 text-slate-100 placeholder-slate-500 border border-slate-800 rounded-2xl px-6 py-4 focus:ring-2 focus:ring-teal-500 transition-all"
               type="email"
               placeholder="name@example.com"
               disabled={isLoading}
@@ -111,7 +119,7 @@ export function TwoStepLogin() {
                 Password
               </label>
               <Link
-                className="text-xs text-teal-600 font-bold hover:underline"
+                className="text-xs text-teal-200 font-bold hover:text-[#08333D] hover:underline"
                 href="/forgot-password"
               >
                 Forgot?
@@ -119,7 +127,7 @@ export function TwoStepLogin() {
             </div>
             <Input
               {...register('password')}
-              className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 focus:ring-2 focus:ring-teal-500 transition-all"
+              className="w-full bg-slate-900 text-slate-100 placeholder-slate-500 border border-slate-800 rounded-2xl px-6 py-4 focus:ring-2 focus:ring-teal-500 transition-all"
               type="password"
               placeholder="••••••••"
               disabled={isLoading}
@@ -132,7 +140,8 @@ export function TwoStepLogin() {
           </div>
 
           <Button
-            className="w-full bg-teal-600 text-white py-5 rounded-full font-bold text-lg hover:bg-teal-700 transition-all shadow-xl shadow-teal-600/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            variant="brand"
+            className="w-full text-[#08333D] py-5 rounded-full font-bold text-lg transition-all shadow-xl disabled:opacity-50 disabled:cursor-not-allowed brand-btn"
             type="submit"
             disabled={isLoading || isSubmitting}
           >
@@ -140,9 +149,9 @@ export function TwoStepLogin() {
           </Button>
         </form>
 
-        <div className="mt-10 pt-10 border-t border-slate-100 text-center">
-          <p className="text-slate-500 mb-4">Don't have an account?</p>
-          <Link className="text-teal-600 font-bold hover:underline" href="/register">
+        <div className="mt-10 pt-10 border-t border-slate-800/70 text-center">
+          <p className="text-slate-400 mb-4">Don't have an account?</p>
+          <Link className="text-teal-200 font-bold hover:text-[#08333D] hover:underline" href="/register">
             Create an Account
           </Link>
         </div>

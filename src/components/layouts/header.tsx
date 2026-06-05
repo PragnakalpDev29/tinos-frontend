@@ -8,46 +8,28 @@ export function Header() {
   const { toggleMobileMenu } = useUIStore()
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-100 shadow-sm">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-slate-950/95 backdrop-blur border-b border-slate-800/70 shadow-sm text-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          <Link className="flex items-center gap-2" href="/">
-            <div className="w-10 h-10 bg-teal-600 rounded-lg flex items-center justify-center text-white">
+        <div className="flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:justify-between">
+          <Link className="flex items-center gap-3" href="/">
+            <div className="w-11 h-11 bg-[#466f78] rounded-full flex items-center justify-center text-[#08333D] shadow-lg shadow-black/20">
               <PlusSquare />
             </div>
-            <Text variant="bold" className="text-2xl font-serif font-bold text-slate-900">
-              TINOS
-            </Text>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.35em] text-slate-400">Tinos</p>
+              <p className="text-base font-semibold text-slate-100">Therapeutics</p>
+            </div>
           </Link>
-          
-          {/* Desktop Menu */}
-          {/* <nav className="hidden md:flex items-center gap-8">
-            <Link className="text-slate-600 hover:text-teal-600 font-medium transition-colors" href="/specialties">
-              Specialties
+
+          {/* Desktop action buttons removed to match main site */}
+
+          <div className="flex items-center justify-end gap-3">
+            <Link className="rounded-full border border-slate-700 bg-slate-900 px-5 py-2 text-sm font-semibold text-slate-100 transition hover:bg-slate-800" href="#contact">
+              Contact
             </Link>
-            <Link className="text-slate-600 hover:text-teal-600 font-medium transition-colors" href="/doctors">
-              Doctors
-            </Link>
-            <Link className="text-slate-600 hover:text-teal-600 font-medium transition-colors" href="/how-it-works">
-              How it Works
-            </Link>
-            <Link className="text-slate-600 hover:text-teal-600 font-medium transition-colors" href="/about">
-              About
-            </Link>
-          </nav> */}
-          
-          <div className="flex items-center gap-4">
-            <Link className="bg-teal-600 text-white px-6 py-3 rounded-full font-bold hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/20 hidden md:block" href="/login">
-              Login
-            </Link>
-            {/* <Link className="bg-teal-600 text-white px-6 py-3 rounded-full font-bold hover:bg-teal-700 transition-all shadow-lg shadow-teal-600/20 hidden md:block" href="/#book">
-              Book Now
-            </Link> */}
-            
-            {/* Mobile Toggle */}
             <Button 
               onClick={toggleMobileMenu}
-              className="md:hidden text-slate-600"
+              className="md:hidden text-slate-100"
               aria-label="Toggle menu"
             >
               <Menu />

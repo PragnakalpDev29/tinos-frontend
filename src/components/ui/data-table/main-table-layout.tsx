@@ -61,20 +61,22 @@ export function MainTableLayout<T extends Record<string, any>>({
         isLoading={isLoading}
       />
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-        <DataTable
-          columns={columns}
-          data={data}
-          isLoading={isLoading}
-          emptyState={emptyState}
-          onSort={onSort}
-          sortKey={sortKey}
-          sortDirection={sortDirection}
-          onRowClick={onRowClick}
-        />
+      <div className="bg-white/50 rounded-xl shadow-sm border border-[#90BCC5]/50 backdrop-blur-md">
+        <div className="overflow-hidden rounded-t-xl">
+          <DataTable
+            columns={columns}
+            data={data}
+            isLoading={isLoading}
+            emptyState={emptyState}
+            onSort={onSort}
+            sortKey={sortKey}
+            sortDirection={sortDirection}
+            onRowClick={onRowClick}
+          />
+        </div>
 
-        {pagination && totalPages > 1 && !isLoading && data.length > 0 && (
-          <div className="px-6 pb-4 border-t border-slate-200">
+        {pagination && !isLoading && data.length > 0 && (onPageSizeChange || totalPages > 1) && (
+          <div className="px-6 pb-4 border-t border-[#90BCC5]/40">
             <TablePagination
               currentPage={currentPage}
               totalPages={totalPages}

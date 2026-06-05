@@ -64,9 +64,10 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
   const [jobsData, setJobsData] = useState<JobData[]>([])
   const [isDataLoading, setIsDataLoading] = useState(true)
 
-  const fetchJobs = useCallback(async () => {
+  const fetchJobs = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent === true
     try {
-      setIsDataLoading(true)
+      if (!silent) setIsDataLoading(true)
       const fetchPreprocessing = jobService.getPreprocessingJobs()
       const fetchNeoantigen = pipelineType === 'Preprocessing'
         ? Promise.resolve([])
@@ -105,11 +106,21 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
 
       setJobsData(allJobs)
     } catch (error) {
+      const status = (error as any)?.response?.status
+      if (status === 401 || status === 403) {
+        try {
+          const { signOut } = await import('next-auth/react')
+          await signOut({ callbackUrl: '/login' })
+        } catch {
+          router.replace('/login')
+        }
+        return
+      }
       console.error('Failed to fetch jobs:', error)
     } finally {
-      setIsDataLoading(false)
+      if (!silent) setIsDataLoading(false)
     }
-  }, [pipelineType])
+  }, [pipelineType, router])
 
   const syncAndRefresh = useCallback(async () => {
     try {
@@ -125,6 +136,14 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
   useEffect(() => {
     // Force a sync with AWS on mount to ensure fresh status data
     jobService.syncActiveJobs().then(() => fetchJobs()).catch(() => fetchJobs())
+  }, [fetchJobs])
+
+  // Poll list as fallback when websocket is unavailable.
+  useEffect(() => {
+    const poll = setInterval(() => {
+      fetchJobs({ silent: true })
+    }, 15_000)
+    return () => clearInterval(poll)
   }, [fetchJobs])
 
   // Handle real-time job status updates via WebSocket
@@ -171,7 +190,7 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
       render: (item) => (
         <Link
           href={`/dashboard/jobs/${item.id}?type=${item.pipeline_type === 'Neoantigen' ? 'neoantigen' : 'preprocessing'}`}
-          className="font-medium text-teal-600 hover:text-teal-700 hover:underline"
+          className="font-medium text-[#08333D] hover:text-[#08333D] hover:underline"
         >
           #{item.id}
         </Link>
@@ -184,7 +203,7 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
     //   render: (item) => (
     //     <span className={`px-2 py-1 rounded text-xs font-semibold ${(item as any).pipeline_type === 'Neoantigen'
     //       ? 'bg-violet-100 text-violet-700'
-    //       : 'bg-teal-100 text-teal-700'
+    //       : 'bg-teal-800 text-[#08333D]'
     //       }`}>
     //       {(item as any).pipeline_type || 'Preprocessing'}
     //     </span>
@@ -201,7 +220,7 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
           <Link href={href} className="hover:opacity-80 transition-opacity block">
             <div className="max-w-xs">
               <div className="flex items-center gap-2">
-                <span className="font-medium truncate block text-slate-900">
+                <span className="font-medium truncate block text-[#08333D]">
                   {item.is_child
                     ? (item.job_name || item.display_name).replace(/ \[Child \d+\]$/, '')
                     : item.display_name}
@@ -212,7 +231,7 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
                   </span>
                 )}
               </div>
-              <span className="text-xs text-slate-500 truncate block font-mono">{item.job_id}</span>
+              <span className="text-xs text-[#08333D] truncate block font-mono">{item.job_id}</span>
             </div>
           </Link>
         )
@@ -225,7 +244,7 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
     //   render: (item) => (
     //     <span className={`px-2 py-1 rounded text-xs font-semibold ${item.job_type === 'SINGLE' ? 'bg-blue-100 text-blue-700' :
     //       item.job_type === 'ARRAY' ? 'bg-purple-100 text-purple-700' :
-    //         'bg-slate-100 text-slate-700'
+    //         'bg-white text-[#08333D]'
     //       }`}>
     //       {item.display_type}
     //     </span>
@@ -238,23 +257,23 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
       render: (item) => {
         const statusColors: Record<string, string> = {
           SUBMITTED: 'bg-blue-100 text-blue-700',
-          PENDING: 'bg-slate-100 text-slate-700 border border-slate-200',
-          PENDING_PREPROCESSING: 'bg-slate-100 text-slate-700 italic border border-slate-200',
+          PENDING: 'bg-white/55 text-[#08333D] border border-[#90BCC5]/50',
+          PENDING_PREPROCESSING: 'bg-white text-[#08333D] italic border border-[#90BCC5]/50',
           RUNNABLE: 'bg-cyan-100 text-cyan-700',
           STARTING: 'bg-indigo-100 text-indigo-700',
           RUNNING: 'bg-amber-100 text-amber-700 animate-pulse',
           SUCCEEDED: 'bg-emerald-100 text-emerald-700 border border-emerald-200',
           FAILED: 'bg-red-100 text-red-700 border border-red-200',
-          TERMINATED: 'bg-gray-200 text-gray-800',
+          TERMINATED: 'bg-gray-200 text-[#08333D]',
         }
 
         const renderBatchStatus = (status: string, label: string) => {
           const normalizedStatus = (status || 'UNKNOWN').toUpperCase()
-          const colorClass = statusColors[normalizedStatus] || 'bg-gray-100 text-gray-600'
+          const colorClass = statusColors[normalizedStatus] || 'bg-gray-100 text-[#08333D]'
 
           return (
             <div className="flex flex-col gap-0.5">
-              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-tighter leading-none">{label}</span>
+              <span className="text-[10px] uppercase font-bold text-[#08333D] tracking-tighter leading-none">{label}</span>
               <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap transition-all ${colorClass}`}>
                 {normalizedStatus.replace(/_/g, ' ')}
               </span>
@@ -269,13 +288,13 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
                 {renderBatchStatus(item.status, 'Stage 1: Prep')}
                 {item.linked_arcas_hla && (
                   <>
-                    <div className="h-4 w-px bg-slate-200 self-end mb-1 mx-1" />
+                    <div className="h-4 w-px bg-[#466F78] self-end mb-1 mx-1" />
                     {renderBatchStatus(item.linked_arcas_hla.status, 'HLA')}
                   </>
                 )}
                 {item.linked_neoantigen_status && (
                   <>
-                    <div className="h-4 w-px bg-slate-200 self-end mb-1 mx-1" />
+                    <div className="h-4 w-px bg-[#466F78] self-end mb-1 mx-1" />
                     {renderBatchStatus(item.linked_neoantigen_status, 'Stage 2: Neo')}
                   </>
                 )}
@@ -333,10 +352,15 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
       header: 'Actions',
       render: (item) => {
         const type = (item as any).pipeline_type === 'Neoantigen' ? 'neoantigen' : 'preprocessing'
-        return (
+        const isSubmitted = (item.status || '').toUpperCase() === 'SUBMITTED'
+        return isSubmitted ? (
+          <span className="inline-flex items-center px-3 py-1 bg-white/40 text-[#08333D]/80 rounded text-xs font-semibold cursor-not-allowed">
+            View
+          </span>
+        ) : (
           <Link
             href={`/dashboard/jobs/${item.id}?type=${type}`}
-            className="inline-flex items-center px-3 py-1 bg-slate-100 text-slate-700 rounded hover:bg-teal-50 hover:text-teal-700 transition-colors text-xs font-semibold"
+            className="inline-flex items-center px-3 py-1 bg-white text-[#08333D] rounded hover:bg-white/50 hover:text-[#08333D] transition-colors text-xs font-semibold"
           >
             View
           </Link>
@@ -375,82 +399,74 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
     currentPage * pageSize
   )
 
-  const pageTitle = pipelineType ? `${pipelineType} Jobs` : `Welcome back, ${user?.name || 'User'}!`
+  const pageTitle = pipelineType === 'Preprocessing' ? 'Preprocessing + Neoantigen' : pipelineType ? `${pipelineType} Jobs` : `Welcome back, ${user?.name || 'User'}!`
 
   return (
     <div className="space-y-8">
       <div className="flex items-start justify-between">
         <div>
           <div className="flex items-center gap-3">
-            <h1 className="text-3xl font-bold text-slate-900">
+            <h1 className="text-3xl font-bold text-[#08333D]">
               {pageTitle}
             </h1>
-            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${isConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${isConnected ? 'bg-emerald-100 text-emerald-700' : 'bg-[#466F78]/30 text-[#08333D]'}`}>
               <div className={`w-1.5 h-1.5 rounded-full ${isConnected ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
               {isConnected ? 'Live' : 'Offline'}
             </div>
           </div>
-          <p className="text-slate-500 text-sm mt-2">
-            All preprocessing and neoantigen jobs are shown below. Successful preprocessing jobs automatically trigger a neoantigen job.
+          <p className="text-[#08333D] text-sm mt-2">
+            Once preprocessing finishes, Neoantigen Discovery will start automatically.
           </p>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-white border-slate-200/60 shadow-sm overflow-hidden">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
-              <LayoutDashboard className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Jobs</p>
-              <h3 className="text-2xl font-bold text-slate-900">{stats.total}</h3>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border border-[#90BCC5]/50 shadow-sm overflow-hidden bg-white/75 backdrop-blur-md p-4 flex items-center gap-4">
+          <div className="p-3 bg-[#466F78]/20 text-[#08333D] rounded-xl">
+            <LayoutDashboard className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-[#08333D] uppercase tracking-wider">Total Jobs</p>
+            <h3 className="text-2xl font-bold text-[#08333D]">{stats.total}</h3>
+          </div>
+        </div>
 
-        <Card className="bg-white border-slate-200/60 shadow-sm overflow-hidden">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
-              <Activity className="w-5 h-5 flex-shrink-0" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Active Run</p>
-              <h3 className="text-2xl font-bold text-slate-900">{stats.active}</h3>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border border-[#90BCC5]/50 shadow-sm overflow-hidden bg-white/75 backdrop-blur-md p-4 flex items-center gap-4">
+          <div className="p-3 bg-amber-100/80 text-amber-600 rounded-xl">
+            <Activity className="w-5 h-5 flex-shrink-0" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-[#08333D] uppercase tracking-wider">Active Run</p>
+            <h3 className="text-2xl font-bold text-[#08333D]">{stats.active}</h3>
+          </div>
+        </div>
 
-        <Card className="bg-white border-slate-200/60 shadow-sm overflow-hidden">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Succeeded</p>
-              <h3 className="text-2xl font-bold text-slate-900">{stats.success}</h3>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border border-[#90BCC5]/50 shadow-sm overflow-hidden bg-white/75 backdrop-blur-md p-4 flex items-center gap-4">
+          <div className="p-3 bg-emerald-100/80 text-emerald-600 rounded-xl">
+            <CheckCircle2 className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-[#08333D] uppercase tracking-wider">Succeeded</p>
+            <h3 className="text-2xl font-bold text-[#08333D]">{stats.success}</h3>
+          </div>
+        </div>
 
-        <Card className="bg-white border-slate-200/60 shadow-sm overflow-hidden">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-red-50 text-red-600 rounded-xl">
-              <AlertCircle className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Failed Jobs</p>
-              <h3 className="text-2xl font-bold text-slate-900">{stats.failed}</h3>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="rounded-xl border border-[#90BCC5]/50 shadow-sm overflow-hidden bg-white/75 backdrop-blur-md p-4 flex items-center gap-4">
+          <div className="p-3 bg-red-100/80 text-red-500 rounded-xl">
+            <AlertCircle className="w-5 h-5" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-[#08333D] uppercase tracking-wider">Failed Jobs</p>
+            <h3 className="text-2xl font-bold text-[#08333D]">{stats.failed}</h3>
+          </div>
+        </div>
       </div>
 
       <Card variant="elevated" className="shadow-lg">
         <CardContent className="p-6">
           <MainTableLayout
-            title={pipelineType ? `${pipelineType} Jobs` : "All Pipeline Jobs"}
+            title={pipelineType === 'Preprocessing' ? 'Preprocessing + Neoantigen Jobs' : pipelineType ? `${pipelineType} Jobs` : 'All Pipeline Jobs'}
             columns={columns}
             data={paginatedData}
             isLoading={isLoading || isDataLoading}
@@ -460,14 +476,14 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
               <div className="flex flex-wrap items-center gap-3">
                 {!pipelineType && (
                   <div className="flex items-center gap-2">
-                    <Filter className="w-4 h-4 text-slate-500" />
+                    <Filter className="w-4 h-4 text-[#08333D]" />
                     <select
                       value={pipelineFilter}
                       onChange={(e) => {
                         setPipelineFilter(e.target.value)
                         setCurrentPage(1)
                       }}
-                      className="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                      className="px-4 py-2 border border-[#90BCC5]/50 rounded-lg bg-white text-[#08333D] focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
                     >
                       <option value="ALL">All Pipelines</option>
                       <option value="Preprocessing">Preprocessing</option>
@@ -482,7 +498,7 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
                     setStatusFilter(e.target.value)
                     setCurrentPage(1)
                   }}
-                  className="px-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-sm"
+                  className="px-4 py-2 border border-[#90BCC5]/50 rounded-lg bg-white text-[#08333D] focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm"
                 >
                   {JOB_STATUS_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>
@@ -496,13 +512,13 @@ export function DashboardContent({ user, isLoading, pipelineType }: DashboardCon
               <div className="flex items-center gap-2">
                 <button
                   onClick={syncAndRefresh}
-                  className="p-2 text-slate-500 hover:text-teal-600 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="p-2 text-[#08333D] hover:text-[#466f78] hover:bg-[#08333D] rounded-lg transition-colors"
                   title="Refresh data"
                 >
                   <RefreshCcw className={`w-4 h-4 ${isDataLoading ? 'animate-spin' : ''}`} />
                 </button>
                 <Link href="/preprocessing">
-                  <button className="flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors">
+                  <button className="flex items-center gap-2 px-4 py-2 bg-[#466f78] text-white rounded-lg hover:bg-[#3b5f67] transition-colors">
                     <Plus className="w-4 h-4" />
                     <span className="hidden sm:inline">Start New Pipeline</span>
                   </button>

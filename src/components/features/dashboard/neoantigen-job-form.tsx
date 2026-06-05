@@ -93,11 +93,11 @@ export function NeoantigenJobForm() {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-8">
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">Pipeline Configuration</h3>
+            <div className="bg-white/20 rounded-lg shadow-sm border border-[#90BCC5]/50 p-6">
+                <h3 className="text-lg font-semibold text-[#08333D] mb-4">Pipeline Configuration</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label htmlFor="run_name" className="block text-sm font-medium text-slate-700 mb-2">
+                        <label htmlFor="run_name" className="block text-sm font-medium text-[#08333D] mb-2">
                             Run Name
                         </label>
                         <input
@@ -107,13 +107,13 @@ export function NeoantigenJobForm() {
                             value={formData.run_name}
                             onChange={handleInputChange}
                             required
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                             placeholder="e.g. neo-discovery-01"
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="cores" className="block text-sm font-medium text-slate-700 mb-2">
+                        <label htmlFor="cores" className="block text-sm font-medium text-[#08333D] mb-2">
                             CPU Cores
                         </label>
                         <select
@@ -122,7 +122,7 @@ export function NeoantigenJobForm() {
                             value={formData.cores}
                             onChange={handleInputChange}
                             required
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                         >
                             <option value={28}>28 Cores</option>
                             <option value={56}>56 Cores</option>
@@ -133,7 +133,7 @@ export function NeoantigenJobForm() {
                 </div>
 
                 <div className="mt-4">
-                    <label htmlFor="s3_base" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="s3_base" className="block text-sm font-medium text-[#08333D] mb-2">
                         S3 Base Directory (Inputs/Outputs will derive from here)
                     </label>
                     <input
@@ -143,20 +143,20 @@ export function NeoantigenJobForm() {
                         value={formData.s3_base}
                         onChange={handleInputChange}
                         required
-                        className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                        className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                         placeholder="s3://bucket/path"
                     />
                 </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+            <div className="bg-white/20 rounded-lg shadow-sm border border-[#90BCC5]/50 p-6">
                 <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-slate-900">Advanced Overrides (Optional)</h3>
-                    <span className="text-xs text-slate-500 italic">Leave blank to use base directory defaults</span>
+                    <h3 className="text-lg font-semibold text-[#08333D]">Advanced Overrides (Optional)</h3>
+                    <span className="text-xs text-[#08333D] italic">Leave blank to use base directory defaults</span>
                 </div>
                 <div className="space-y-4">
                     <div>
-                        <label htmlFor="s3_consolidated_rna_bam" className="block text-sm font-medium text-slate-700 mb-1 text-xs">
+                        <label htmlFor="s3_consolidated_rna_bam" className="block text-sm font-medium text-[#08333D] mb-1 text-xs">
                             Consolidated RNA BAM Override
                         </label>
                         <input
@@ -165,13 +165,13 @@ export function NeoantigenJobForm() {
                             name="s3_consolidated_rna_bam"
                             value={formData.s3_consolidated_rna_bam}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder:text-slate-400"
+                            className="w-full px-4 py-2 border border-[#466F78]/40 rounded-lg text-[#08333D] text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder:text-[#08333D]/50"
                             placeholder="s3://path/to/bam"
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="s3_hla_output" className="block text-sm font-medium text-slate-700 mb-1 text-xs">
+                        <label htmlFor="s3_hla_output" className="block text-sm font-medium text-[#08333D] mb-1 text-xs">
                             HLA Output Override
                         </label>
                         <input
@@ -180,14 +180,14 @@ export function NeoantigenJobForm() {
                             name="s3_hla_output"
                             value={formData.s3_hla_output}
                             onChange={handleInputChange}
-                            className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder:text-slate-400"
+                            className="w-full px-4 py-2 border border-[#466F78]/40 rounded-lg text-[#08333D] text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder:text-[#08333D]/50"
                             placeholder="s3://path/to/hla"
                         />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label htmlFor="s3_output" className="block text-sm font-medium text-slate-700 mb-1 text-xs">
+                            <label htmlFor="s3_output" className="block text-sm font-medium text-[#08333D] mb-1 text-xs">
                                 S3 Results Path Override
                             </label>
                             <input
@@ -196,12 +196,12 @@ export function NeoantigenJobForm() {
                                 name="s3_output"
                                 value={formData.s3_output}
                                 onChange={handleInputChange}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder:text-slate-400"
+                                className="w-full px-4 py-2 border border-[#466F78]/40 rounded-lg text-[#08333D] text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder:text-[#08333D]/50"
                                 placeholder="s3://path/to/output"
                             />
                         </div>
                         <div>
-                            <label htmlFor="s3_logs" className="block text-sm font-medium text-slate-700 mb-1 text-xs">
+                            <label htmlFor="s3_logs" className="block text-sm font-medium text-[#08333D] mb-1 text-xs">
                                 S3 Logs Path Override
                             </label>
                             <input
@@ -210,7 +210,7 @@ export function NeoantigenJobForm() {
                                 name="s3_logs"
                                 value={formData.s3_logs}
                                 onChange={handleInputChange}
-                                className="w-full px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder:text-slate-400"
+                                className="w-full px-4 py-2 border border-[#466F78]/40 rounded-lg text-[#08333D] text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent placeholder:text-[#08333D]/50"
                                 placeholder="s3://path/to/logs"
                             />
                         </div>
@@ -236,7 +236,7 @@ export function NeoantigenJobForm() {
                             })
                         }
                     }}
-                    className="px-6 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors"
+                    className="px-6 py-2 border border-[#90BCC5]/50 rounded-lg text-[#08333D] hover:bg-[#08333D]/40 transition-colors"
                 >
                     Reset
                 </button>

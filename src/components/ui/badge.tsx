@@ -14,8 +14,8 @@ export function Badge({
   ...props 
 }: BadgeProps) {
   const variantStyles = {
-    default: 'bg-slate-100 text-slate-900',
-    success: 'bg-green-100 text-green-900',
+    default: 'bg-[#08333D] text-[#08333D]',
+    success: 'bg-green-900 text-green-900',
     warning: 'bg-orange-100 text-orange-900',
     error: 'bg-red-100 text-red-900',
   }

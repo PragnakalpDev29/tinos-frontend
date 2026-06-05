@@ -65,21 +65,21 @@ export function ArcasHlaJobForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+      <div className="bg-[#08333D] rounded-lg shadow-sm border border-[#466F78]/30 p-6">
         <div className="flex items-center gap-3 mb-4">
           <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
-          <h3 className="text-lg font-semibold text-slate-900">arcasHLA Job Configuration</h3>
+          <h3 className="text-lg font-semibold text-[#08333D]">arcasHLA Job Configuration</h3>
         </div>
         
-        <p className="text-sm text-slate-600 mb-6">
+        <p className="text-sm text-[#466F78] mb-6">
           Submit a standalone HLA typing job using arcasHLA. This job will process BAM files to determine HLA genotypes.
         </p>
 
         <div className="space-y-6">
           <div>
-            <label htmlFor="job_name" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="job_name" className="block text-sm font-medium text-[#08333D] mb-2">
               Job Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -89,13 +89,13 @@ export function ArcasHlaJobForm() {
               value={formData.job_name}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#466F78]/50 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               placeholder="e.g. arcas-hla-samples_10"
             />
           </div>
 
           <div>
-            <label htmlFor="s3_input_prefix" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="s3_input_prefix" className="block text-sm font-medium text-[#08333D] mb-2">
               S3 Input Prefix (BAM files location) <span className="text-red-500">*</span>
             </label>
             <input
@@ -105,14 +105,14 @@ export function ArcasHlaJobForm() {
               value={formData.s3_input_prefix}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-mono text-sm"
+              className="w-full px-4 py-2 border border-[#466F78]/50 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-mono text-sm"
               placeholder="s3://bucket/path/to/bam-files/"
             />
-            <p className="text-xs text-slate-500 mt-1">Directory containing BAM files for HLA typing</p>
+            <p className="text-xs text-[#466F78] mt-1">Directory containing BAM files for HLA typing</p>
           </div>
 
           <div>
-            <label htmlFor="s3_output_prefix" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="s3_output_prefix" className="block text-sm font-medium text-[#08333D] mb-2">
               S3 Output Prefix <span className="text-red-500">*</span>
             </label>
             <input
@@ -122,14 +122,14 @@ export function ArcasHlaJobForm() {
               value={formData.s3_output_prefix}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-mono text-sm"
+              className="w-full px-4 py-2 border border-[#466F78]/50 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-mono text-sm"
               placeholder="s3://bucket/path/to/output/"
             />
-            <p className="text-xs text-slate-500 mt-1">Base directory for HLA typing results</p>
+            <p className="text-xs text-[#466F78] mt-1">Base directory for HLA typing results</p>
           </div>
 
           <div>
-            <label htmlFor="threads" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="threads" className="block text-sm font-medium text-[#08333D] mb-2">
               Threads <span className="text-red-500">*</span>
             </label>
             <select
@@ -138,7 +138,7 @@ export function ArcasHlaJobForm() {
               value={formData.threads}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#466F78]/50 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
             >
               <option value={4}>4 Threads</option>
               <option value={8}>8 Threads</option>
@@ -146,7 +146,7 @@ export function ArcasHlaJobForm() {
               <option value={16}>16 Threads</option>
               <option value={24}>24 Threads</option>
             </select>
-            <p className="text-xs text-slate-500 mt-1">Number of CPU threads per BAM file</p>
+            <p className="text-xs text-[#466F78] mt-1">Number of CPU threads per BAM file</p>
           </div>
         </div>
       </div>
@@ -175,7 +175,7 @@ export function ArcasHlaJobForm() {
               })
             }
           }}
-          className="px-6 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors"
+          className="px-6 py-2 border border-[#466F78]/50 rounded-lg text-[#08333D] hover:bg-[#08333D]/40 transition-colors"
         >
           Reset
         </button>

@@ -13,3 +13,49 @@
 .animate-shimmer {
   animation: shimmer 2s infinite;
 }
+
+html {
+  height: 100%;
+}
+
+:root {
+  --color-dark-blue: #08333d;
+  --color-mid-blue: #74a9c8;
+  --color-light-blue: #c8d7e3;
+  --color-teal: #466f78;
+  --color-off-white: #f2f4f8;
+}
+
+body {
+  min-height: 100vh;
+  background-image: url('https://cdn.prod.website-files.com/69bd2045b9175af5ee45abf7/69caa4a3910a52a83f931e61_tinos_bg_wide_softerright.jpg');
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-color: #08333D;
+  color: #08333D;
+  position: relative;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.55);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* Brand button to match tinostx.com primary CTA */
+.brand-btn {
+  background-color: #466f78 !important; /* tinostx teal */
+  box-shadow: 0 18px 30px rgba(70,111,120,0.16);
+}
+.brand-btn:hover {
+  background-color: #3b5f67 !important;
+}

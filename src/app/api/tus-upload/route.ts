@@ -5,8 +5,6 @@ import crypto from 'crypto'
 import { s3Client, saveUploadMetadata, createTimestampFolder, cleanOldUploads } from './shared'
 
 const AWS_REGION = process.env.AWS_REGION || ''
-const ACCESS_KEY = process.env.ACCESS_KEY || ''
-const SECRET_KEY = process.env.SECRET_KEY || ''
 const BUCKET_NAME = process.env.BUCKET_NAME || 'epicode-neoantigen'
 
 export async function OPTIONS(request: NextRequest) {
@@ -40,10 +38,14 @@ export async function GET(request: NextRequest) {
             supportedVersions: ['1.0.0'],
             extensions: ['creation', 'creation-with-upload', 'expiration', 'termination'],
             maxSize: 'Unlimited',
-            chunkSize: '4MB',
+            chunkSize: '16MB',
         })
     } catch (error) {
-        console.error('Tus info error:', error)
+        if (process.env.NODE_ENV !== 'production') {
+            console.error('Tus info error:', error)
+        } else {
+            console.error('Tus info error')
+        }
         return NextResponse.json(
             { error: 'Failed to get Tus info' },
             { status: 500 }
@@ -62,10 +64,10 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        if (!AWS_REGION || !ACCESS_KEY || !SECRET_KEY) {
+        if (!AWS_REGION) {
             return NextResponse.json(
                 {
-                    error: 'AWS credentials not configured'
+                    error: 'AWS region not configured'
                 },
                 { status: 500 }
             )
@@ -134,6 +136,7 @@ export async function POST(request: NextRequest) {
         } else {
             basePath = s3BucketUrl.replace(/^\/+/, '')
         }
+        basePath = basePath.replace(/\/+$/, '')
 
         const key = `${basePath}/${timestampFolder}/${filename}`
 
@@ -160,11 +163,20 @@ export async function POST(request: NextRequest) {
             uploadId,
             key,
             size,
+            ownerUserId: (session as any)?.user?.id
+                ? String((session as any).user.id)
+                : undefined,
+            ownerEmail: (session as any)?.user?.email
+                ? String((session as any).user.email).toLowerCase()
+                : undefined,
             parts: [],
+            uploadedByteOffset: 0,
             createdAt: Date.now(),
         })
 
-        const location = `${request.nextUrl.origin}/api/tus-upload/${uploadIdShort}`
+        const proto = request.headers.get('x-forwarded-proto') || 'https'
+        const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || request.nextUrl.host
+        const location = `${proto}://${host}/api/tus-upload/${uploadIdShort}`
 
         return new NextResponse(null, {
             status: 201,
@@ -177,7 +189,11 @@ export async function POST(request: NextRequest) {
             },
         })
     } catch (error) {
-        console.error('Tus POST error:', error)
+        if (process.env.NODE_ENV !== 'production') {
+            console.error('Tus POST error:', error)
+        } else {
+            console.error('Tus POST error')
+        }
         return NextResponse.json(
             { error: 'Failed to create upload' },
             { status: 500 }

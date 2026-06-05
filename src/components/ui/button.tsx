@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 import { type ButtonHTMLAttributes } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'outline' | 'ghost' | 'destructive'
+  variant?: 'default' | 'outline' | 'ghost' | 'destructive' | 'brand'
   size?: 'default' | 'sm' | 'lg' | 'icon'
   contentKey?: string
 }
@@ -18,10 +18,11 @@ export function Button({
   ...props 
 }: ButtonProps) {
   const variantStyles = {
-    default: 'bg-teal-600 text-white hover:bg-teal-700 shadow-lg shadow-teal-600/20',
-    outline: 'border-2 border-teal-600 text-teal-600 hover:bg-teal-50',
-    ghost: 'hover:bg-slate-100 text-slate-900',
+    default: 'bg-[#08333D] text-[#08333D] hover:bg-[#466F78] shadow-lg shadow-blue-900/20',
+    outline: 'border-2 border-teal-500 text-teal-500 hover:bg-[#466F78]/30',
+    ghost: 'hover:bg-[#08333D] text-[#08333D]',
     destructive: 'bg-red-600 text-white hover:bg-red-700',
+    brand: 'bg-[#466f78] text-white hover:bg-[#3b5f67] shadow-lg shadow-black/20',
   }
 
   const sizeStyles = {

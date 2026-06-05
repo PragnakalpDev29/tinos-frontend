@@ -5,6 +5,22 @@ import { s3Client, getUploadMetadata, saveUploadMetadata, deleteUploadMetadata, 
 
 const BUCKET_NAME = process.env.BUCKET_NAME || 'epicode-neoantigen'
 
+function getSessionIdentity(session: any): { userId?: string; email?: string } {
+    const userId = session?.user?.id ? String(session.user.id) : undefined
+    const email = session?.user?.email
+        ? String(session.user.email).toLowerCase()
+        : undefined
+    return { userId, email }
+}
+
+function isOwner(upload: any, identity: { userId?: string; email?: string }): boolean {
+    const uploadUserId = upload?.ownerUserId ? String(upload.ownerUserId) : undefined
+    const uploadEmail = upload?.ownerEmail ? String(upload.ownerEmail).toLowerCase() : undefined
+    if (uploadUserId && identity.userId) return uploadUserId === identity.userId
+    if (uploadEmail && identity.email) return uploadEmail === identity.email
+    return false
+}
+
 export async function OPTIONS(request: NextRequest) {
     // SECURITY: Restrict CORS to specific origins instead of wildcard '*'
     const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://your-domain.com'
@@ -41,6 +57,20 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             )
         }
 
+        const identity = getSessionIdentity(session)
+        // Backward compatibility for legacy metadata created before ownership
+        // binding: claim ownership on first authenticated access.
+        if (!upload.ownerUserId && !upload.ownerEmail) {
+            upload.ownerUserId = identity.userId
+            upload.ownerEmail = identity.email
+            await saveUploadMetadata(uploadId, upload)
+        } else if (!isOwner(upload, identity)) {
+            return NextResponse.json(
+                { error: 'Forbidden: upload belongs to another user' },
+                { status: 403 }
+            )
+        }
+
         const uploadOffset = request.headers.get('upload-offset')
 
         if (!uploadOffset) {
@@ -53,7 +83,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         const offset = parseInt(uploadOffset)
         const chunk = await request.arrayBuffer()
 
-        const partNumber = Math.floor(offset / CHUNK_SIZE) + 1
+        // Sequential S3 part index (1-based). Using part count keeps part numbers
+        // correct even if client `chunkSize` is changed, as long as Tus sends
+        // ordered chunks.
+        const partNumber = upload.parts.length + 1
 
         const uploadCommand = new UploadPartCommand({
             Bucket: BUCKET_NAME,
@@ -72,9 +105,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
         upload.parts.sort((a: { partNumber: number }, b: { partNumber: number }) => a.partNumber - b.partNumber)
 
-        await saveUploadMetadata(uploadId, upload)
-
         const newOffset = offset + chunk.byteLength
+        upload.uploadedByteOffset = newOffset
+
+        await saveUploadMetadata(uploadId, upload)
 
         const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://your-domain.com'
         const headers: Record<string, string> = {
@@ -120,7 +154,11 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             headers,
         })
     } catch (error) {
-        console.error('Tus PATCH error:', error)
+        if (process.env.NODE_ENV !== 'production') {
+            console.error('Tus PATCH error:', error)
+        } else {
+            console.error('Tus PATCH error')
+        }
         return NextResponse.json(
             { error: 'Failed to upload chunk' },
             { status: 500 }
@@ -149,9 +187,25 @@ export async function HEAD(request: NextRequest, { params }: { params: Promise<{
             )
         }
 
-        const currentOffset = upload.parts.reduce((sum: number, part: { partNumber: number }) => {
-            return sum + (part.partNumber * CHUNK_SIZE)
-        }, 0)
+        const identity = getSessionIdentity(session)
+        if (!upload.ownerUserId && !upload.ownerEmail) {
+            upload.ownerUserId = identity.userId
+            upload.ownerEmail = identity.email
+            await saveUploadMetadata(uploadId, upload)
+        } else if (!isOwner(upload, identity)) {
+            return NextResponse.json(
+                { error: 'Forbidden: upload belongs to another user' },
+                { status: 403 }
+            )
+        }
+
+        let currentOffset = 0
+        if (typeof upload.uploadedByteOffset === 'number') {
+            currentOffset = upload.uploadedByteOffset
+        } else if (upload.parts?.length) {
+            // Legacy metadata (no stored offset): rough estimate for resume only
+            currentOffset = Math.min(upload.parts.length * CHUNK_SIZE, upload.size)
+        }
 
         const allowedOrigin = process.env.ALLOWED_ORIGIN || 'https://your-domain.com'
         const headers: Record<string, string> = {
@@ -177,7 +231,11 @@ export async function HEAD(request: NextRequest, { params }: { params: Promise<{
             headers,
         })
     } catch (error) {
-        console.error('Tus HEAD error:', error)
+        if (process.env.NODE_ENV !== 'production') {
+            console.error('Tus HEAD error:', error)
+        } else {
+            console.error('Tus HEAD error')
+        }
         return NextResponse.json(
             { error: 'Failed to get upload info' },
             { status: 500 }
@@ -206,6 +264,18 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
             )
         }
 
+        const identity = getSessionIdentity(session)
+        if (!upload.ownerUserId && !upload.ownerEmail) {
+            upload.ownerUserId = identity.userId
+            upload.ownerEmail = identity.email
+            await saveUploadMetadata(uploadId, upload)
+        } else if (!isOwner(upload, identity)) {
+            return NextResponse.json(
+                { error: 'Forbidden: upload belongs to another user' },
+                { status: 403 }
+            )
+        }
+
         try {
             const abortCommand = new AbortMultipartUploadCommand({
                 Bucket: BUCKET_NAME,
@@ -224,7 +294,11 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
             },
         })
     } catch (error) {
-        console.error('Tus DELETE error:', error)
+        if (process.env.NODE_ENV !== 'production') {
+            console.error('Tus DELETE error:', error)
+        } else {
+            console.error('Tus DELETE error')
+        }
         return NextResponse.json(
             { error: 'Failed to delete upload' },
             { status: 500 }

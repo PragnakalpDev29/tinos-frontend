@@ -23,10 +23,10 @@ export function DashboardLayout({ children, className }: DashboardLayoutProps) {
 
   if (status === 'loading') {
     return (
-      <div className="flex h-screen items-center justify-center bg-slate-50">
+      <div className="flex h-screen items-center justify-center bg-transparent">
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading...</p>
+          <p className="text-slate-200">Loading...</p>
         </div>
       </div>
     )
@@ -37,7 +37,7 @@ export function DashboardLayout({ children, className }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="flex h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-[#08333D]/30">
       <DashboardSidebar />
       <main className={cn('flex-1 overflow-auto', className)}>
         <div className="p-8">

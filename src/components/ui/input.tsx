@@ -11,7 +11,7 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, variant = 'default', contentKey, ...props }, ref) => {
     const variantStyles = {
-      default: 'border-slate-200 focus:ring-teal-500',
+      default: 'border-[#466F78]/30 focus:ring-teal-500',
       error: 'border-red-500 focus:ring-red-500',
     }
 
@@ -19,7 +19,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       <input
         ref={ref}
         className={cn(
-          'w-full rounded-full border bg-white px-4 py-3 text-slate-900 transition-all',
+          'w-full rounded-full border bg-[#08333D] px-4 py-3 text-[#08333D] transition-all',
           'focus:outline-none focus:ring-2',
           variantStyles[variant],
           className

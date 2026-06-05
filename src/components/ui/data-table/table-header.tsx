@@ -32,7 +32,7 @@ export function TableHeader({
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div className="flex-1">
           {typeof title === 'string' ? (
-            <h2 className="text-2xl md:text-3xl font-bold text-slate-900">{title}</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-[#08333D]">{title}</h2>
           ) : (
             title
           )}
@@ -55,7 +55,7 @@ export function TableHeader({
                 value={searchValue}
                 onChange={handleSearchChange}
                 disabled={isLoading}
-                className="w-full px-4 py-2.5 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-slate-50 disabled:cursor-not-allowed"
+                className="w-full px-4 py-2.5 border border-[#90BCC5]/50 rounded-lg bg-white/50 text-[#08333D] placeholder:text-[#08333D] backdrop-blur-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:bg-white/10 disabled:cursor-not-allowed"
               />
             </div>
           )}

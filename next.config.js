@@ -36,7 +36,7 @@ const nextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' blob: data: https://*.amazonaws.com",
+              "img-src 'self' blob: data: https://*.amazonaws.com https://cdn.prod.website-files.com",
               "font-src 'self'",
               "connect-src 'self' https://*.amazonaws.com https://tinostx.ai ws: wss:",
               "frame-ancestors 'none'",

@@ -66,6 +66,7 @@ export const config = {
     '/neoantigen',
     '/neoantigen-jobs',
     '/pipeline-config',
+    '/jobs',
     '/preprocessing',
     '/preprocessing-jobs',
     '/profile',

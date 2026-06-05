@@ -108,14 +108,14 @@ export function S3UploadContent() {
   return (
     <div className="max-w-4xl mx-auto">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-slate-900 mb-2">S3 File Upload</h1>
-          <p className="text-slate-600">Upload files to AWS S3 bucket with progress tracking</p>
+          <h1 className="text-3xl font-bold text-[#08333D] mb-2">S3 File Upload</h1>
+          <p className="text-[#466F78]">Upload files to AWS S3 bucket with progress tracking</p>
         </div>
 
-        <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
+        <div className="bg-[#08333D] rounded-lg shadow-sm border border-[#466F78]/30 p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label htmlFor="file-upload" className="block text-sm font-medium text-slate-700 mb-2">
+              <label htmlFor="file-upload" className="block text-sm font-medium text-[#08333D] mb-2">
                 Select Files (Multiple)
               </label>
               <div className="relative">
@@ -125,29 +125,29 @@ export function S3UploadContent() {
                   multiple
                   onChange={handleFileChange}
                   disabled={uploading}
-                  className="block w-full text-sm text-slate-500
+                  className="block w-full text-sm text-[#466F78]
                     file:mr-4 file:py-2 file:px-4
                     file:rounded-lg file:border-0
                     file:text-sm file:font-semibold
-                    file:bg-teal-50 file:text-teal-700
-                    hover:file:bg-teal-100
+                    file:bg-[#466F78]/30 file:text-[#466F78]
+                    hover:file:bg-teal-800
                     disabled:opacity-50 disabled:cursor-not-allowed
                     cursor-pointer"
                 />
               </div>
               {files && files.length > 0 && (
                 <div className="mt-2 space-y-1">
-                  <p className="text-sm font-medium text-slate-700">
+                  <p className="text-sm font-medium text-[#08333D]">
                     Selected {files.length} file(s):
                   </p>
                   <div className="max-h-32 overflow-y-auto space-y-1">
                     {Array.from(files).map((file, index) => (
-                      <p key={index} className="text-xs text-slate-600 pl-2">
+                      <p key={index} className="text-xs text-[#466F78] pl-2">
                         • {file.name} ({formatFileSize(file.size)})
                       </p>
                     ))}
                   </div>
-                  <p className="text-sm text-slate-600 font-medium">
+                  <p className="text-sm text-[#466F78] font-medium">
                     Total: {formatFileSize(Array.from(files).reduce((acc, f) => acc + f.size, 0))}
                   </p>
                 </div>
@@ -155,7 +155,7 @@ export function S3UploadContent() {
             </div>
 
             <div>
-              <label htmlFor="s3-bucket-url" className="block text-sm font-medium text-slate-700 mb-2">
+              <label htmlFor="s3-bucket-url" className="block text-sm font-medium text-[#08333D] mb-2">
                 S3 Bucket URL
               </label>
               <input
@@ -165,12 +165,12 @@ export function S3UploadContent() {
                 onChange={(e) => setS3BucketUrl(e.target.value)}
                 disabled={uploading}
                 placeholder="e.g., s3://bucket-name/path/to/folder"
-                className="block w-full px-4 py-2 border border-slate-300 rounded-lg
+                className="block w-full px-4 py-2 border border-[#466F78]/50 rounded-lg
                   focus:ring-2 focus:ring-teal-500 focus:border-transparent
                   disabled:opacity-50 disabled:cursor-not-allowed
-                  text-slate-900 placeholder-slate-400"
+                  text-[#08333D] placeholder-slate-400"
               />
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="mt-1 text-xs text-[#466F78]">
                 Enter the S3 bucket path. Files will be uploaded to a timestamped folder (e.g., path/2026-03-06_18-30-45/)
               </p>
             </div>
@@ -178,10 +178,10 @@ export function S3UploadContent() {
             {uploading && (
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm font-medium text-slate-700">Upload Progress</span>
-                  <span className="text-sm font-semibold text-teal-600">{uploadProgress}%</span>
+                  <span className="text-sm font-medium text-[#08333D]">Upload Progress</span>
+                  <span className="text-sm font-semibold text-[#466F78]">{uploadProgress}%</span>
                 </div>
-                <div className="w-full bg-slate-200 rounded-full h-2.5">
+                <div className="w-full bg-[#466F78]/30 rounded-full h-2.5">
                   <div
                     className="bg-teal-600 h-2.5 rounded-full transition-all duration-300"
                     style={{ width: `${uploadProgress}%` }}
@@ -206,7 +206,7 @@ export function S3UploadContent() {
         {response && (
           <div className={`mt-6 rounded-lg border p-6 ${
             response.success 
-              ? 'bg-green-50 border-green-200' 
+              ? 'bg-green-900/30 border-green-200' 
               : 'bg-red-50 border-red-200'
           }`}>
             <div className="flex items-start">
@@ -228,7 +228,7 @@ export function S3UploadContent() {
                   {response.success ? 'Upload Successful' : 'Upload Failed'}
                 </h3>
                 <div className={`mt-2 text-sm ${
-                  response.success ? 'text-green-700' : 'text-red-700'
+                  response.success ? 'text-green-400' : 'text-red-700'
                 }`}>
                   <p className="mb-2">{response.message}</p>
                   {response.success && response.uploaded_files && response.uploaded_files.length > 0 && (
@@ -239,7 +239,7 @@ export function S3UploadContent() {
                           <span className="font-semibold">Folder:</span> {response.folder_name}
                         </p>
                       )}
-                      <div className="bg-white bg-opacity-50 rounded p-3 max-h-48 overflow-y-auto">
+                      <div className="bg-[#08333D] bg-opacity-50 rounded p-3 max-h-48 overflow-y-auto">
                         <p className="font-semibold mb-2">Uploaded Files ({response.uploaded_files.length}):</p>
                         {response.uploaded_files.map((file, index) => (
                           <div key={index} className="text-xs mb-1 pl-2">
@@ -278,14 +278,14 @@ export function S3UploadContent() {
           </div>
         )}
 
-        <div className="mt-8 bg-slate-50 rounded-lg border border-slate-200 p-6">
-          <h2 className="text-lg font-semibold text-slate-900 mb-3">Configuration Requirements</h2>
-          <div className="space-y-2 text-sm text-slate-600">
+        <div className="mt-8 bg-[#08333D]/40 rounded-lg border border-[#466F78]/30 p-6">
+          <h2 className="text-lg font-semibold text-[#08333D] mb-3">Configuration Requirements</h2>
+          <div className="space-y-2 text-sm text-[#466F78]">
             <p>• Ensure AWS credentials are configured in environment variables:</p>
             <ul className="ml-6 space-y-1 list-disc">
-              <li><code className="bg-slate-200 px-2 py-0.5 rounded">AWS_REGION</code></li>
-              <li><code className="bg-slate-200 px-2 py-0.5 rounded">ACCESS_KEY</code></li>
-              <li><code className="bg-slate-200 px-2 py-0.5 rounded">SECRET_KEY</code></li>
+              <li><code className="bg-[#466F78]/30 px-2 py-0.5 rounded">AWS_REGION</code></li>
+              <li><code className="bg-[#466F78]/30 px-2 py-0.5 rounded">ACCESS_KEY</code></li>
+              <li><code className="bg-[#466F78]/30 px-2 py-0.5 rounded">SECRET_KEY</code></li>
             </ul>
             <p className="mt-3">• Files are uploaded with AES256 server-side encryption</p>
             <p>• Large files use multipart upload for better reliability</p>

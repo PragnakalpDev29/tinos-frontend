@@ -14,9 +14,9 @@ export function Card({
   ...props 
 }: CardProps) {
   const variantStyles = {
-    default: 'bg-white shadow-sm',
-    bordered: 'bg-white border-2 border-slate-200',
-    elevated: 'bg-white shadow-lg',
+    default: 'bg-white/55 border border-[#90BCC5]/50 shadow-sm backdrop-blur-md',
+    bordered: 'bg-white/55 border border-[#90BCC5]/50 backdrop-blur-md',
+    elevated: 'bg-white/55 border border-[#90BCC5]/50 shadow-lg backdrop-blur-md',
   }
 
   return (
@@ -47,7 +47,7 @@ interface CardTitleProps extends HTMLAttributes<HTMLHeadingElement> {}
 
 export function CardTitle({ className, children, ...props }: CardTitleProps) {
   return (
-    <h3 className={cn('text-xl font-bold text-slate-900', className)} {...props}>
+    <h3 className={cn('text-xl font-bold text-[#08333D]', className)} {...props}>
       {children}
     </h3>
   )
@@ -57,7 +57,7 @@ interface CardDescriptionProps extends HTMLAttributes<HTMLParagraphElement> {}
 
 export function CardDescription({ className, children, ...props }: CardDescriptionProps) {
   return (
-    <p className={cn('text-sm text-slate-600', className)} {...props}>
+    <p className={cn('text-sm text-[#466F78]', className)} {...props}>
       {children}
     </p>
   )
@@ -77,7 +77,7 @@ interface CardFooterProps extends HTMLAttributes<HTMLDivElement> {}
 
 export function CardFooter({ className, children, ...props }: CardFooterProps) {
   return (
-    <div className={cn('mt-4 pt-4 border-t border-slate-200', className)} {...props}>
+    <div className={cn('mt-4 pt-4 border-t border-[#90BCC5]/50', className)} {...props}>
       {children}
     </div>
   )

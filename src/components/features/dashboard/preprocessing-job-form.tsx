@@ -155,11 +155,11 @@ export function PreprocessingJobForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {/* <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">Job Information</h3>
+      {/* <div className="bg-white/20 rounded-lg shadow-sm border border-[#90BCC5]/50 p-6">
+        <h3 className="text-lg font-semibold text-[#08333D] mb-4">Job Information</h3>
         <div className="space-y-4">
           <div>
-            <label htmlFor="jobName" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="jobName" className="block text-sm font-medium text-[#08333D] mb-2">
               Job Name
             </label>
             <input
@@ -169,13 +169,13 @@ export function PreprocessingJobForm() {
               value={formData.jobName}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="Enter job name"
             />
           </div>
 
           <div>
-            <label htmlFor="jobType" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="jobType" className="block text-sm font-medium text-[#08333D] mb-2">
               Job Type
             </label>
             <select
@@ -184,7 +184,7 @@ export function PreprocessingJobForm() {
               value={formData.jobType}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             >
               <option value="SINGLE">Single Job</option>
               <option value="ARRAY">Array Job</option>
@@ -192,7 +192,7 @@ export function PreprocessingJobForm() {
           </div>
 
           <div>
-            <label htmlFor="status" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="status" className="block text-sm font-medium text-[#08333D] mb-2">
               Status
             </label>
             <select
@@ -201,7 +201,7 @@ export function PreprocessingJobForm() {
               value={formData.status}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
             >
               <option value="SUBMITTED">Submitted</option>
               <option value="PENDING">Pending</option>
@@ -214,7 +214,7 @@ export function PreprocessingJobForm() {
           </div>
 
           <div>
-            <label htmlFor="fileCount" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="fileCount" className="block text-sm font-medium text-[#08333D] mb-2">
               File Count
             </label>
             <input
@@ -225,18 +225,18 @@ export function PreprocessingJobForm() {
               onChange={handleInputChange}
               min="1"
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="Number of BAM files to process"
             />
           </div>
         </div>
       </div> */}
 
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">S3 Input Paths</h3>
+      <div className="bg-white/20 rounded-lg shadow-sm border border-[#90BCC5]/50 p-6">
+        <h3 className="text-lg font-semibold text-[#08333D] mb-4">S3 Input Paths</h3>
         <div className="space-y-4">
           <div>
-            <label htmlFor="s3RnaBam" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="s3RnaBam" className="block text-sm font-medium text-[#08333D] mb-2">
               S3 RNA BAM Path
             </label>
             <input
@@ -246,9 +246,9 @@ export function PreprocessingJobForm() {
               value={formData.s3RnaBam}
               onChange={handleInputChange}
               required
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent ${s3Validation.status === 'valid' ? 'border-green-400 bg-green-50' :
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent ${s3Validation.status === 'valid' ? 'border-green-400 bg-green-900/30' :
                 s3Validation.status === 'invalid' ? 'border-red-400 bg-red-50' :
-                  'border-slate-300'
+                  'border-[#90BCC5]/50'
                 }`}
               placeholder="s3://bucket-name/path/to/rna-bam"
             />
@@ -259,7 +259,7 @@ export function PreprocessingJobForm() {
               </p>
             )}
             {s3Validation.status === 'valid' && (
-              <p className="mt-1 text-sm text-green-700 font-medium">
+              <p className="mt-1 text-sm text-green-400 font-medium">
                 ✅ {s3Validation.message}
               </p>
             )}
@@ -272,7 +272,7 @@ export function PreprocessingJobForm() {
 
 
           <div>
-            <label htmlFor="s3DegBam" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="s3DegBam" className="block text-sm font-medium text-[#08333D] mb-2">
               S3 DEG BAM Path
             </label>
             <input
@@ -282,13 +282,13 @@ export function PreprocessingJobForm() {
               value={formData.s3DegBam}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="s3://bucket-name/path/to/deg-bam"
             />
           </div>
 
           <div>
-            <label htmlFor="s3DegJr" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="s3DegJr" className="block text-sm font-medium text-[#08333D] mb-2">
               S3 DEG JR Path
             </label>
             <input
@@ -298,13 +298,13 @@ export function PreprocessingJobForm() {
               value={formData.s3DegJr}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="s3://bucket-name/path/to/deg-jr"
             />
           </div>
 
           <div>
-            <label htmlFor="s3Gtex" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="s3Gtex" className="block text-sm font-medium text-[#08333D] mb-2">
               S3 GTEX Path
             </label>
             <input
@@ -314,13 +314,13 @@ export function PreprocessingJobForm() {
               value={formData.s3Gtex}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="s3://bucket-name/path/to/gtex"
             />
           </div>
 
           <div>
-            <label htmlFor="s3Gencode" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="s3Gencode" className="block text-sm font-medium text-[#08333D] mb-2">
               S3 GENCODE Path
             </label>
             <input
@@ -330,18 +330,18 @@ export function PreprocessingJobForm() {
               value={formData.s3Gencode}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="s3://bucket-name/path/to/gencode"
             />
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-slate-200 p-6">
-        <h3 className="text-lg font-semibold text-slate-900 mb-4">S3 Output Paths</h3>
+      <div className="bg-white/20 rounded-lg shadow-sm border border-[#90BCC5]/50 p-6">
+        <h3 className="text-lg font-semibold text-[#08333D] mb-4">S3 Output Paths</h3>
         <div className="space-y-4">
           <div>
-            <label htmlFor="s3OutputBucket" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="s3OutputBucket" className="block text-sm font-medium text-[#08333D] mb-2">
               S3 Main Output Path
             </label>
             <input
@@ -351,13 +351,13 @@ export function PreprocessingJobForm() {
               value={formData.s3OutputBucket}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="s3://bucket-name/output"
             />
           </div>
 
           <div>
-            <label htmlFor="s3HlaOutput" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="s3HlaOutput" className="block text-sm font-medium text-[#08333D] mb-2">
               S3 HLA Output Path
             </label>
             <input
@@ -367,13 +367,13 @@ export function PreprocessingJobForm() {
               value={formData.s3HlaOutput}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="s3://bucket-name/output/hla"
             />
           </div>
 
           <div>
-            <label htmlFor="s3RnaBamOutput" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="s3RnaBamOutput" className="block text-sm font-medium text-[#08333D] mb-2">
               S3 RNA BAM Output Path
             </label>
             <input
@@ -383,13 +383,13 @@ export function PreprocessingJobForm() {
               value={formData.s3RnaBamOutput}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="s3://bucket-name/output/rna-bam"
             />
           </div>
 
           <div>
-            <label htmlFor="s3DegBamConsolidated" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="s3DegBamConsolidated" className="block text-sm font-medium text-[#08333D] mb-2">
               S3 DEG BAM Consolidated Output Path
             </label>
             <input
@@ -398,13 +398,13 @@ export function PreprocessingJobForm() {
               name="s3DegBamConsolidated"
               value={formData.s3DegBamConsolidated}
               onChange={handleInputChange}
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="s3://bucket-name/output/deg-bam-consolidated"
             />
           </div>
 
           <div>
-            <label htmlFor="s3LogsBucket" className="block text-sm font-medium text-slate-700 mb-2">
+            <label htmlFor="s3LogsBucket" className="block text-sm font-medium text-[#08333D] mb-2">
               S3 Logs Bucket Path
             </label>
             <input
@@ -414,7 +414,7 @@ export function PreprocessingJobForm() {
               value={formData.s3LogsBucket}
               onChange={handleInputChange}
               required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-[#90BCC5]/50 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent"
               placeholder="s3://bucket-name/logs"
             />
           </div>
@@ -444,7 +444,7 @@ export function PreprocessingJobForm() {
               })
             }
           }}
-          className="px-6 py-2 border border-slate-300 rounded-lg text-slate-700 hover:bg-slate-50 transition-colors"
+          className="px-6 py-2 border border-[#90BCC5]/50 rounded-lg text-[#08333D] hover:bg-[#08333D]/40 transition-colors"
         >
           Reset
         </button>

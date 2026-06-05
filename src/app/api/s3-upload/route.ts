@@ -7,16 +7,10 @@ const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB per file
 const MAX_FILES = 10
 
 const AWS_REGION = process.env.AWS_REGION || ''
-const ACCESS_KEY = process.env.ACCESS_KEY || ''
-const SECRET_KEY = process.env.SECRET_KEY || ''
 const BUCKET_NAME = process.env.BUCKET_NAME || 'epicode-neoantigen'
 
 const s3Client = new S3Client({
   region: AWS_REGION,
-  credentials: {
-    accessKeyId: ACCESS_KEY,
-    secretAccessKey: SECRET_KEY,
-  },
 })
 
 function createTimestampFolder(): string {
@@ -48,10 +42,14 @@ export async function GET(request: NextRequest) {
       maxSize: 'Unlimited',
       supportedFormats: ['.bam'],
       tusEndpoint: '/api/tus-upload',
-      chunkSize: '4MB',
+      chunkSize: '16MB',
     })
   } catch (error) {
-    console.error('S3 upload info error:', error)
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('S3 upload info error:', error)
+    } else {
+      console.error('S3 upload info error')
+    }
     return NextResponse.json(
       { error: 'Failed to get upload info' },
       { status: 500 }
@@ -70,11 +68,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (!AWS_REGION || !ACCESS_KEY || !SECRET_KEY) {
+    if (!AWS_REGION) {
       return NextResponse.json(
         {
           success: false,
-          message: 'AWS credentials not configured. Please set AWS_REGION, ACCESS_KEY, and SECRET_KEY environment variables.'
+          message: 'AWS region not configured. Please set AWS_REGION environment variable.'
         },
         { status: 500 }
       )

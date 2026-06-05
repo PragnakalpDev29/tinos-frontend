@@ -3,8 +3,10 @@
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { signOut } from 'next-auth/react'
+import { useUploadStore, useM6aUploadStore } from '@/store'
+import { Upload } from 'lucide-react'
 
 interface MenuItem {
   label: string
@@ -14,50 +16,23 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   {
-    label: 'Dashboard',
-    href: '/dashboard',
+    label: 'Jobs',
+    href: '/jobs',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7l2 2 4-4" />
       </svg>
     ),
   },
   {
-    label: 'Start Pipeline',
-    href: '/preprocessing',
+    label: 'Analyses',
+    href: '/analyses',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
       </svg>
     ),
   },
-  {
-    label: 'Pipeline Config',
-    href: '/pipeline-config',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7h16M4 12h16M4 17h7" />
-      </svg>
-    ),
-  },
-  // {
-  //   label: 'S3 Upload',
-  //   href: '/s3-upload',
-  //   icon: (
-  //     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-  //       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-  //     </svg>
-  //   ),
-  // },
-  // {
-  //   label: 'Appointments',
-  //   href: '/dashboard/appointments',
-  //   icon: (
-  //     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-  //       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-  //     </svg>
-  //   ),
-  // },
   {
     label: 'Profile',
     href: '/profile',
@@ -86,24 +61,45 @@ interface DashboardSidebarProps {
 export function DashboardSidebar({ className }: DashboardSidebarProps) {
   const pathname = usePathname()
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const { uploading: preUploading, overallProgress: preProgress } = useUploadStore()
+  const { uploading: m6aUploading, overallProgress: m6aProgress } = useM6aUploadStore()
+
+  // On mount (i.e. as soon as a dashboard page renders after sign-in), ask
+  // both upload stores to resume any paused tus uploads. If there's nothing
+  // paused (normal first-time login) this is a cheap no-op. If the user
+  // signed out with uploads in flight earlier this tab-session, they were
+  // paused in memory and will now pick up from the exact byte they stopped.
+  useEffect(() => {
+    try { useUploadStore.getState().resumeAll() } catch { /* ignore */ }
+    try { useM6aUploadStore.getState().resumeAll() } catch { /* ignore */ }
+  }, [])
+
+  // Each pipeline tracks its uploads in its own store. We surface them
+  // side-by-side (stacked rows in the expanded sidebar, stacked mini-badges
+  // in the collapsed sidebar) instead of hiding one behind the other, so a
+  // user who kicks off a preprocess upload and an m6A upload at the same
+  // time can see both progress at once.
+  const showPre = preUploading || (preProgress > 0 && preProgress < 100)
+  const showM6a = m6aUploading || (m6aProgress > 0 && m6aProgress < 100)
+  const showUploadProgress = showPre || showM6a
 
   return (
     <aside
       className={cn(
-        'bg-white border-r border-slate-200 transition-all duration-300',
+        'bg-white/50 border-r border-[#90BCC5]/50 text-[#08333D] transition-all duration-300 backdrop-blur-md',
         isCollapsed ? 'w-20' : 'w-64',
         className
       )}
     >
       <div className="flex flex-col h-full">
-        <div className="p-6 border-b border-slate-200">
+        <div className="p-6 border-b border-[#90BCC5]/40">
           <div className="flex items-center justify-between">
             {!isCollapsed && (
-              <h2 className="text-2xl font-bold text-teal-600">TINOS</h2>
+              <h2 className="text-2xl font-bold text-[#08333D]">TINOS</h2>
             )}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+              className="p-2 rounded-lg hover:bg-white/50 transition-colors text-[#08333D]"
               aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               <svg
@@ -118,10 +114,10 @@ export function DashboardSidebar({ className }: DashboardSidebarProps) {
           </div>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           {menuItems.map((item) => {
-            const isActive = item.href === '/dashboard'
-              ? pathname === '/dashboard'
+            const isActive = item.href === '/jobs'
+              ? pathname === '/jobs' || pathname === '/dashboard' || pathname.startsWith('/m6a-jobs')
               : pathname.startsWith(item.href)
             return (
               <Link
@@ -130,8 +126,8 @@ export function DashboardSidebar({ className }: DashboardSidebarProps) {
                 className={cn(
                   'flex items-center gap-3 px-4 py-3 rounded-lg transition-all',
                   isActive
-                    ? 'bg-teal-50 text-teal-600 font-semibold'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
+                    ? 'bg-white/75 text-[#08333D] font-semibold'
+                    : 'text-[#08333D] hover:bg-white/50 hover:text-[#08333D]',
                   isCollapsed && 'justify-center'
                 )}
                 title={isCollapsed ? item.label : undefined}
@@ -143,11 +139,105 @@ export function DashboardSidebar({ className }: DashboardSidebarProps) {
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-200">
+        {/* Upload Progress Indicator — one row per active pipeline so that
+            concurrent preprocess + m6A uploads are both visible. */}
+        {showUploadProgress && (
+          <div className={cn(
+            'mx-4 mb-4 space-y-2',
+            isCollapsed && 'flex flex-col items-center mx-2'
+          )}>
+            {!isCollapsed ? (
+              <>
+                {showPre && (
+                  <div className="p-3 bg-white/50 rounded-xl border border-[#90BCC5]/40 shadow-sm animate-pulse">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-[10px] font-bold text-[#08333D] uppercase tracking-wider flex items-center gap-1">
+                        <Upload className="w-3 h-3" /> Preprocess
+                      </span>
+                      <span className="text-[10px] font-black text-[#08333D]">{preProgress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-teal-500 h-1.5 rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${preProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+                {showM6a && (
+                  <div className="p-3 bg-white/50 rounded-xl border border-[#90BCC5]/40 shadow-sm animate-pulse">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-1">
+                        <Upload className="w-3 h-3" /> m6A
+                      </span>
+                      <span className="text-[10px] font-black text-emerald-300">{m6aProgress}%</span>
+                    </div>
+                    <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                      <div
+                        className="bg-emerald-500 h-1.5 rounded-full transition-all duration-500 ease-out"
+                        style={{ width: `${m6aProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                {showPre && (
+                  <div className="relative group cursor-help" title={`Preprocess uploading: ${preProgress}%`}>
+                    <div className="h-10 w-10 bg-teal-50 rounded-lg flex items-center justify-center text-teal-600 border border-teal-100">
+                      <Upload className="w-5 h-5 animate-bounce" />
+                    </div>
+                    <div className="absolute -top-1 -right-1 h-4 w-4 bg-teal-500 text-[8px] font-bold text-[#08333D] rounded-full flex items-center justify-center">
+                      {preProgress}
+                    </div>
+                  </div>
+                )}
+                {showM6a && (
+                  <div className="relative group cursor-help" title={`m6A uploading: ${m6aProgress}%`}>
+                    <div className="h-10 w-10 bg-emerald-50 rounded-lg flex items-center justify-center text-emerald-600 border border-emerald-100">
+                      <Upload className="w-5 h-5 animate-bounce" />
+                    </div>
+                    <div className="absolute -top-1 -right-1 h-4 w-4 bg-emerald-500 text-[8px] font-bold text-[#08333D] rounded-full flex items-center justify-center">
+                      {m6aProgress}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        <div className="p-4 border-t border-[#90BCC5]/40">
           <button
-            onClick={() => signOut({ callbackUrl: '/login' })}
+            onClick={async () => {
+              // Keep upload state alive across the sign-out → sign-in round
+              // trip so the user can pick up exactly where they left off.
+              //
+              // Steps:
+              //   1. pauseAll() aborts the in-flight tus chunk requests but
+              //      KEEPS the Upload instances + file blobs in memory.
+              //   2. signOut({ redirect: false }) clears the session cookie
+              //      without triggering a full page reload, so the Zustand
+              //      store (and tus instances) are preserved.
+              //   3. DashboardLayout's useEffect detects the unauthenticated
+              //      state and soft-redirects to /login, still in the same JS
+              //      context. Nothing is reset.
+              //
+              // When the user signs back in, DashboardSidebar's mount effect
+              // below calls resumeAll() on both stores and uploads continue
+              // from the exact byte they paused at.
+              try { useUploadStore.getState().pauseAll() } catch { /* ignore */ }
+              try { useM6aUploadStore.getState().pauseAll() } catch { /* ignore */ }
+              try {
+                await signOut({ redirect: false })
+              } catch {
+                // Fall back to a hard sign-out if the soft one fails.
+                signOut({ callbackUrl: '/login' })
+              }
+            }}
             className={cn(
-              'flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-all w-full',
+              'flex items-center gap-3 px-4 py-3 rounded-lg text-red-300 hover:bg-white/65 transition-all w-full',
               isCollapsed && 'justify-center'
             )}
             title={isCollapsed ? 'Logout' : undefined}
